@@ -151,6 +151,11 @@ else
 
                         <input value="@project.item.Name" @oninput="e => project.item.Name = e.Value?.ToString() ?? string.Empty" placeholder="Nome do projeto" />
                         <textarea rows="4" value="@project.item.Description" @oninput="e => project.item.Description = e.Value?.ToString() ?? string.Empty" placeholder="Descrição do projeto"></textarea>
+                        <textarea rows="4" value="@project.item.CaseStudySummary" @oninput="e => project.item.CaseStudySummary = e.Value?.ToString() ?? string.Empty" placeholder="Visão geral do projeto"></textarea>
+                        <textarea rows="4" value="@project.item.ArchitectureDescription" @oninput="e => project.item.ArchitectureDescription = e.Value?.ToString() ?? string.Empty" placeholder="Explicação da arquitetura do projeto"></textarea>
+                        <textarea rows="4" value="@project.item.Problem" @oninput="e => project.item.Problem = e.Value?.ToString() ?? string.Empty" placeholder="Problema do projeto"></textarea>
+                        <textarea rows="4" value="@project.item.Solution" @oninput="e => project.item.Solution = e.Value?.ToString() ?? string.Empty" placeholder="Solução implementada"></textarea>
+                        <textarea rows="4" value="@project.item.Result" @oninput="e => project.item.Result = e.Value?.ToString() ?? string.Empty" placeholder="Resultado alcançado"></textarea>
                         <input value="@string.Join(", ", project.item.Stack)" @oninput="e => project.item.Stack = ParseList(e.Value?.ToString())" placeholder="Tecnologias" />
                         <input value="@project.item.Link" @oninput="e => project.item.Link = e.Value?.ToString() ?? string.Empty" placeholder="Link do projeto" />
 

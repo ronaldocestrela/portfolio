@@ -263,24 +263,71 @@
                         <div class="project-modal-grid">
                             <div class="project-modal-panel">
                                 <span class="project-panel-label">Visão geral</span>
-                                <p>@(_selectedProject.CaseStudySummary ?? _selectedProject.Description)</p>
+                                @if (string.IsNullOrWhiteSpace(_selectedProject.CaseStudySummary))
+                                {
+                                    <p>Visão geral não informada.</p>
+                                }
+                                else
+                                {
+                                    <div class="project-markdown">@portfolio.Services.MarkdownRenderer.Render(_selectedProject.CaseStudySummary)</div>
+                                }
                             </div>
 
                             <div class="project-modal-panel">
-                                <span class="project-panel-label">Problema</span>
-                                <p>@(_selectedProject.Problem ?? _selectedProject.Description)</p>
+                                <span class="project-panel-label">Arquitetura</span>
+                                @if (string.IsNullOrWhiteSpace(_selectedProject.ArchitectureDescription))
+                                {
+                                    <p>Arquitetura do projeto não informada.</p>
+                                }
+                                else
+                                {
+                                    <div class="project-markdown">@portfolio.Services.MarkdownRenderer.Render(_selectedProject.ArchitectureDescription)</div>
+                                }
                             </div>
                         </div>
 
                         <div class="project-modal-grid">
                             <div class="project-modal-panel">
-                                <span class="project-panel-label">Solução</span>
-                                <p>@(_selectedProject.Solution ?? _selectedProject.Description)</p>
+                                <span class="project-panel-label">Problema</span>
+                                @if (string.IsNullOrWhiteSpace(_selectedProject.Problem))
+                                {
+                                    <p>Problema não informado.</p>
+                                }
+                                else
+                                {
+                                    <div class="project-markdown">@portfolio.Services.MarkdownRenderer.Render(_selectedProject.Problem)</div>
+                                }
                             </div>
 
                             <div class="project-modal-panel">
+                                <span class="project-panel-label">Solução</span>
+                                @if (string.IsNullOrWhiteSpace(_selectedProject.Solution))
+                                {
+                                    <p>Solução não informada.</p>
+                                }
+                                else
+                                {
+                                    <div class="project-markdown">@portfolio.Services.MarkdownRenderer.Render(_selectedProject.Solution)</div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="project-modal-grid">
+                            <div class="project-modal-panel">
                                 <span class="project-panel-label">Resultado</span>
-                                <p>@(_selectedProject.Result ?? _selectedProject.Description)</p>
+                                @if (string.IsNullOrWhiteSpace(_selectedProject.Result))
+                                {
+                                    <p>Resultado não informado.</p>
+                                }
+                                else
+                                {
+                                    <div class="project-markdown">@portfolio.Services.MarkdownRenderer.Render(_selectedProject.Result)</div>
+                                }
+                            </div>
+
+                            <div class="project-modal-panel">
+                                <span class="project-panel-label">Tecnologias</span>
+                                <div class="project-markdown"><p>@string.Join(", ", _selectedProject.DistinctStack)</p></div>
                             </div>
                         </div>
 

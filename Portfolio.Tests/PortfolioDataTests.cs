@@ -78,4 +78,31 @@ public class PortfolioDataTests
 
         Assert.Equal("/img/1.jpg", project.DisplayImageUrl);
     }
+
+    [Fact]
+    public void ProjectDetailFields_ShouldStayIndependent_WhenTheyAreEmpty()
+    {
+        var project = new ProjectItem
+        {
+            Description = "Descrição geral do projeto"
+        };
+
+        project.NormalizeDetailSections();
+
+        Assert.Equal(string.Empty, project.CaseStudySummary);
+        Assert.Equal(string.Empty, project.Problem);
+        Assert.Equal(string.Empty, project.Solution);
+        Assert.Equal(string.Empty, project.Result);
+    }
+
+    [Fact]
+    public void MarkdownRenderer_ShouldTransformBasicMarkdownIntoHtml()
+    {
+        var html = portfolio.Services.MarkdownRenderer.Render("# Título\n\n**Resumo**\n\n- item 1\n- item 2");
+
+        Assert.Contains("<h1", html.Value);
+        Assert.Contains("<strong>Resumo</strong>", html.Value);
+        Assert.Contains("<ul>", html.Value);
+        Assert.Contains("<li>item 1</li>", html.Value);
+    }
 }

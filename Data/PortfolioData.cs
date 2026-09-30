@@ -114,6 +114,7 @@ public class ProjectItem
 {
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string ArchitectureDescription { get; set; } = string.Empty;
     public List<string> Stack { get; set; } = [];
     public string Link { get; set; } = string.Empty;
     public List<string> Images { get; set; } = [];
@@ -146,6 +147,20 @@ public class ProjectItem
 
             return validImages[0];
         }
+    }
+
+    public void NormalizeDetailSections()
+    {
+        CaseStudySummary = NormalizeText(CaseStudySummary);
+        ArchitectureDescription = NormalizeText(ArchitectureDescription);
+        Problem = NormalizeText(Problem);
+        Solution = NormalizeText(Solution);
+        Result = NormalizeText(Result);
+    }
+
+    private static string NormalizeText(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
     }
 
     private static IReadOnlyList<string> GetUniqueValues(IEnumerable<string>? values)
@@ -227,6 +242,7 @@ public class PortfolioData
         {
             Name = "Dashboard de Vendas",
             Description = "Painel para acompanhamento de métricas, relatórios e visão operacional em tempo real.",
+            ArchitectureDescription = "A solução foi organizada em frontend reativo para exploração de dados, API para agregação e cache de métricas, além de banco para armazenamento confiável e dashboards automatizados.",
             Stack = ["Next.js", "Supabase", "Charts"],
             Link = "https://github.com/seu-usuario/dashboard-vendas",
             CaseStudySummary = "Reestruturamos a operação comercial com painel em tempo real, aceleração na análise e maior qualidade nas decisões.",
@@ -239,6 +255,7 @@ public class PortfolioData
         {
             Name = "Plataforma de Leads",
             Description = "Sistema para captação, qualificação e organização de oportunidades de negócio.",
+            ArchitectureDescription = "A plataforma foi estruturada em módulos de cadastro, qualificação, pipeline e relatórios, com comunicação via API e armazenamento centralizado para manter histórico e rastreabilidade.",
             Stack = ["React", "Node.js", "MongoDB"],
             Link = "https://github.com/seu-usuario/plataforma-leads",
             CaseStudySummary = "Aumentei a eficiência do time comercial com processo de lead qualification centralizado e automatizado.",

@@ -72,30 +72,7 @@ public class PortfolioService
             {
                 project.Stack = project.DistinctStack.ToList();
                 project.Images = project.ValidImages.ToList();
-
-                if (string.IsNullOrWhiteSpace(project.CaseStudySummary))
-                {
-                    project.CaseStudySummary = project.Description;
-                    needsMigration = true;
-                }
-
-                if (string.IsNullOrWhiteSpace(project.Problem))
-                {
-                    project.Problem = project.Description;
-                    needsMigration = true;
-                }
-
-                if (string.IsNullOrWhiteSpace(project.Solution))
-                {
-                    project.Solution = project.Description;
-                    needsMigration = true;
-                }
-
-                if (string.IsNullOrWhiteSpace(project.Result))
-                {
-                    project.Result = project.Description;
-                    needsMigration = true;
-                }
+                project.NormalizeDetailSections();
 
                 if (project.KeyMetrics is null || project.KeyMetrics.Count == 0)
                 {

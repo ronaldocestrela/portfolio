@@ -987,6 +987,90 @@ textarea {
     line-height: 1.8;
 }
 
+.project-markdown {
+    display: grid;
+    gap: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.project-markdown > :first-child {
+    margin-top: 0;
+}
+
+.project-markdown > :last-child {
+    margin-bottom: 0;
+}
+
+.project-markdown h1,
+.project-markdown h2,
+.project-markdown h3,
+.project-markdown h4,
+.project-markdown h5,
+.project-markdown h6 {
+    margin: 0.6rem 0 0.4rem;
+    color: var(--text-primary);
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+}
+
+.project-markdown p,
+.project-markdown ul,
+.project-markdown ol,
+.project-markdown blockquote,
+.project-markdown pre,
+.project-markdown hr {
+    margin: 0;
+}
+
+.project-markdown ul,
+.project-markdown ol {
+    padding-left: 1.4rem;
+}
+
+.project-markdown li + li {
+    margin-top: 0.45rem;
+}
+
+.project-markdown a {
+    color: var(--highlight);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+}
+
+.project-markdown strong,
+.project-markdown b {
+    color: var(--text-primary);
+}
+
+.project-markdown code {
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.45rem;
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+}
+
+.project-markdown pre {
+    padding: 0.85rem 0.9rem;
+    overflow-x: auto;
+    border: 1px solid rgba(167, 199, 255, 0.1);
+    border-radius: 0.9rem;
+    background: rgba(10, 15, 22, 0.88);
+}
+
+.project-markdown blockquote {
+    padding-left: 0.9rem;
+    border-left: 2px solid rgba(110, 231, 249, 0.5);
+    color: var(--text-primary);
+}
+
+.project-markdown hr {
+    border: 0;
+    border-top: 1px solid rgba(167, 199, 255, 0.12);
+}
+
 .project-modal-stack {
     display: flex;
     flex-wrap: wrap;

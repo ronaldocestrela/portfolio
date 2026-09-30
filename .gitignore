@@ -1,0 +1,68 @@
+## .NET / ASP.NET Core
+bin/
+obj/
+out/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.cache
+*.log
+*.pdb
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+## ASP.NET / Blazor
+Properties/launchSettings.json
+appsettings.Development.json
+!appsettings.Development.json.example
+
+## Local app data
+/data/*.db
+/data/*.db-shm
+/data/*.db-wal
+/data/*.sqlite
+/data/*.sqlite3
+
+## Docker / dev containers
+.docker/
+.env
+.env.*
+!.env.example
+
+## VS / VS Code
+.vscode/
+*.code-workspace
+
+## NuGet
+packages/
+*.nupkg
+*.snupkg
+project.lock.json
+project.nuget.cache
+
+## Rider / JetBrains
+.idea/
+*.iml
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## Logs
+*.log
+logs/
+
+## Test results
+TestResults/
+coverage/
+*.trx
+
+## Publish output
+publish/
+*.publish.xml

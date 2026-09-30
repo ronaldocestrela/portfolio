@@ -1,0 +1,361 @@
+@page "/admin"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Forms
+@inject portfolio.Services.PortfolioService PortfolioService
+@inject IWebHostEnvironment HostEnvironment
+
+<PageTitle>Admin | Portfólio</PageTitle>
+
+@if (!_isAuthenticated)
+{
+    <main class="admin-shell">
+        <div class="admin-header container">
+            <div>
+                <p class="section-label">Painel administrativo</p>
+                <h1>Autenticação</h1>
+            </div>
+        </div>
+
+        <div class="container">
+            <section class="admin-card" style="max-width: 420px; margin: 0 auto;">
+                <h2>Entre com a senha</h2>
+
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" @bind="_passwordInput" @bind:event="oninput" placeholder="Digite a senha do admin" />
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_statusMessage))
+                {
+                    <div class="status-banner">@_statusMessage</div>
+                }
+
+                <button class="primary-btn" type="button" @onclick="ValidatePassword">Entrar</button>
+            </section>
+        </div>
+    </main>
+}
+else
+{
+    <main class="admin-shell">
+        <div class="admin-header container">
+            <div>
+                <p class="section-label">Painel administrativo</p>
+                <h1>Editar portfólio</h1>
+            </div>
+
+            <div class="admin-actions">
+                <a class="secondary-btn" href="/">Ver site</a>
+                <button class="primary-btn" type="button" @onclick="SavePortfolio">Salvar mudanças</button>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_statusMessage))
+        {
+            <div class="status-banner container">@_statusMessage</div>
+        }
+
+        <div class="admin-grid container">
+            <section class="admin-card">
+                <h2>Perfil</h2>
+
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input value="@_portfolio.Name" @oninput="e => _portfolio.Name = e.Value?.ToString() ?? string.Empty" />
+                </div>
+
+                <div class="form-group">
+                    <label>Cargo</label>
+                    <input value="@_portfolio.Title" @oninput="e => _portfolio.Title = e.Value?.ToString() ?? string.Empty" />
+                </div>
+
+                <div class="form-group">
+                    <label>Localização</label>
+                    <input value="@_portfolio.Location" @oninput="e => _portfolio.Location = e.Value?.ToString() ?? string.Empty" />
+                </div>
+
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input value="@_portfolio.Email" @oninput="e => _portfolio.Email = e.Value?.ToString() ?? string.Empty" />
+                </div>
+
+                <div class="form-group">
+                    <label>Badge principal</label>
+                    <input value="@_portfolio.HeroBadge" @oninput="e => _portfolio.HeroBadge = e.Value?.ToString() ?? string.Empty" />
+                </div>
+
+                <div class="form-group">
+                    <label>GitHub</label>
+                    <input value="@_portfolio.Github" @oninput="e => _portfolio.Github = e.Value?.ToString() ?? string.Empty" />
+                </div>
+
+                <div class="form-group">
+                    <label>LinkedIn</label>
+                    <input value="@_portfolio.LinkedIn" @oninput="e => _portfolio.LinkedIn = e.Value?.ToString() ?? string.Empty" />
+                </div>
+
+                <div class="form-group">
+                    <label>Resumo</label>
+                    <textarea rows="5" value="@_portfolio.Summary" @oninput="e => _portfolio.Summary = e.Value?.ToString() ?? string.Empty"></textarea>
+                </div>
+            </section>
+
+            <section class="admin-card">
+                <div class="card-header">
+                    <h2>Experiências</h2>
+                    <button type="button" class="secondary-btn" @onclick="AddExperience">+ Adicionar</button>
+                </div>
+
+                @foreach (var experience in _portfolio.Experience.Select((item, index) => new { item, index }))
+                {
+                    <div class="editor-block">
+                        <div class="block-top">
+                            <span>Experiência @((experience.index + 1))</span>
+                            @if (_portfolio.Experience.Count > 1)
+                            {
+                                <button type="button" class="remove-btn" @onclick="() => RemoveExperience(experience.index)">Remover</button>
+                            }
+                        </div>
+
+                        <div class="inline-grid">
+                            <input value="@experience.item.Role" @oninput="e => experience.item.Role = e.Value?.ToString() ?? string.Empty" placeholder="Cargo" />
+                            <input value="@experience.item.Company" @oninput="e => experience.item.Company = e.Value?.ToString() ?? string.Empty" placeholder="Empresa" />
+                            <input type="month" value="@ToMonthInputValue(experience.item.StartDate)" @oninput="e => experience.item.StartDate = FromMonthInputValue(e.Value?.ToString())" placeholder="mm/YYYY" />
+                            <input type="month" value="@ToMonthInputValue(experience.item.EndDate)" @oninput="e => experience.item.EndDate = FromMonthInputValue(e.Value?.ToString())" placeholder="mm/YYYY ou vazio para Atual" />
+                            <input value="@string.Join(", ", experience.item.Tech)" @oninput="e => experience.item.Tech = ParseList(e.Value?.ToString())" placeholder="Tecnologias" />
+                        </div>
+
+                        <textarea rows="4" value="@experience.item.Description" @oninput="e => experience.item.Description = e.Value?.ToString() ?? string.Empty" placeholder="Descrição da experiência"></textarea>
+                    </div>
+                }
+            </section>
+        </div>
+
+        <section class="admin-card container project-panel">
+            <div class="card-header">
+                <h2>Projetos</h2>
+                <button type="button" class="secondary-btn" @onclick="AddProject">+ Adicionar</button>
+            </div>
+
+            <div class="project-grid-admin">
+                @foreach (var project in _portfolio.Projects.Select((item, index) => new { item, index }))
+                {
+                    <div class="editor-block">
+                        <div class="block-top">
+                            <span>Projeto @((project.index + 1))</span>
+                            @if (_portfolio.Projects.Count > 1)
+                            {
+                                <button type="button" class="remove-btn" @onclick="() => RemoveProject(project.index)">Remover</button>
+                            }
+                        </div>
+
+                        <input value="@project.item.Name" @oninput="e => project.item.Name = e.Value?.ToString() ?? string.Empty" placeholder="Nome do projeto" />
+                        <textarea rows="4" value="@project.item.Description" @oninput="e => project.item.Description = e.Value?.ToString() ?? string.Empty" placeholder="Descrição do projeto"></textarea>
+                        <input value="@string.Join(", ", project.item.Stack)" @oninput="e => project.item.Stack = ParseList(e.Value?.ToString())" placeholder="Tecnologias" />
+                        <input value="@project.item.Link" @oninput="e => project.item.Link = e.Value?.ToString() ?? string.Empty" placeholder="Link do projeto" />
+
+                        <div class="project-media-block">
+                            <div class="project-image-grid">
+                                @if (project.item.ValidImages.Count > 0)
+                                {
+                                    @foreach (var image in project.item.ValidImages)
+                                    {
+                                        <div class="project-image-item">
+                                            <img src="@image" alt="@project.item.Name" />
+                                            <div class="project-image-actions">
+                                                <label class="display-selection">
+                                                    <input type="radio"
+                                                           name="@($"project-display-{project.index}")"
+                                                           checked="@string.Equals(project.item.DisplayImageUrl, image, StringComparison.OrdinalIgnoreCase)"
+                                                           @onchange="() => SetProjectDisplayImage(project.item, image)" />
+                                                    <span>Exibir</span>
+                                                </label>
+                                                <button type="button" class="remove-btn" @onclick="() => RemoveProjectImage(project.item, image)">Remover</button>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="empty-state">Nenhuma foto adicionada.</p>
+                                }
+                            </div>
+
+                            @if (project.item.ValidImages.Count < 5)
+                            {
+                                <InputFile OnChange="e => HandleProjectImageUpload(e, project.item)" multiple accept="image/*" />
+                            }
+
+                            <small class="helper-text">Até 5 fotos por projeto. Uma delas será usada como foto de exibição.</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+    </main>
+}
+
+@code {
+    private portfolio.Data.PortfolioData _portfolio = new();
+    private string _statusMessage = string.Empty;
+    private string _passwordInput = string.Empty;
+    private bool _isAuthenticated;
+
+    protected override void OnInitialized()
+    {
+        _portfolio = PortfolioService.GetPortfolio();
+    }
+
+    private void ValidatePassword()
+    {
+        var configuredPassword = System.Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+
+        if (string.IsNullOrWhiteSpace(configuredPassword))
+        {
+            _statusMessage = "A senha do admin não foi configurada. Defina ADMIN_PASSWORD no arquivo .env.";
+            return;
+        }
+
+        if (string.Equals(_passwordInput, configuredPassword, StringComparison.Ordinal))
+        {
+            _isAuthenticated = true;
+            _statusMessage = string.Empty;
+            return;
+        }
+
+        _statusMessage = "Senha incorreta.";
+        _passwordInput = string.Empty;
+    }
+
+    private void SavePortfolio()
+    {
+        PortfolioService.SavePortfolio(_portfolio);
+        _statusMessage = "Conteúdo atualizado com sucesso.";
+    }
+
+    private static string ToMonthInputValue(string? value)
+    {
+        var normalized = portfolio.Data.ExperienceItem.NormalizeMonthYear(value);
+
+        if (string.IsNullOrWhiteSpace(normalized) || !normalized.Contains('/'))
+        {
+            return string.Empty;
+        }
+
+        var parts = normalized.Split('/', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 2 || !int.TryParse(parts[0], out var month) || !int.TryParse(parts[1], out var year))
+        {
+            return string.Empty;
+        }
+
+        return $"{year}-{month:D2}";
+    }
+
+    private static string FromMonthInputValue(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        if (DateTime.TryParseExact(value, "yyyy-MM", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsedDate))
+        {
+            return parsedDate.ToString("MM/yyyy", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        return portfolio.Data.ExperienceItem.NormalizeMonthYear(value);
+    }
+
+    private void AddExperience()
+    {
+        _portfolio.Experience.Add(new portfolio.Data.ExperienceItem());
+    }
+
+    private void RemoveExperience(int index)
+    {
+        if (index >= 0 && index < _portfolio.Experience.Count)
+        {
+            _portfolio.Experience.RemoveAt(index);
+        }
+    }
+
+    private void AddProject()
+    {
+        _portfolio.Projects.Add(new portfolio.Data.ProjectItem());
+    }
+
+    private void RemoveProject(int index)
+    {
+        if (index >= 0 && index < _portfolio.Projects.Count)
+        {
+            _portfolio.Projects.RemoveAt(index);
+        }
+    }
+
+    private async Task HandleProjectImageUpload(InputFileChangeEventArgs e, portfolio.Data.ProjectItem project)
+    {
+        if (project is null)
+        {
+            return;
+        }
+
+        var files = e.GetMultipleFiles(Math.Clamp(5 - project.ValidImages.Count, 1, 5)).ToList();
+
+        foreach (var file in files)
+        {
+            var extension = Path.GetExtension(file.Name);
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var folderPath = Path.Combine(HostEnvironment.WebRootPath, "uploads", "projects");
+            Directory.CreateDirectory(folderPath);
+
+            var filePath = Path.Combine(folderPath, fileName);
+            await using (var stream = File.Create(filePath))
+            {
+                await file.OpenReadStream(10 * 1024 * 1024).CopyToAsync(stream);
+            }
+
+            var relativePath = $"/uploads/projects/{fileName}";
+            project.Images.Add(relativePath);
+        }
+
+        project.Images = project.ValidImages.ToList();
+
+        if (project.Images.Count > 0 &&
+            (string.IsNullOrWhiteSpace(project.DisplayImage) || !project.Images.Any(image => string.Equals(image, project.DisplayImage, StringComparison.OrdinalIgnoreCase))))
+        {
+            project.DisplayImage = project.DisplayImageUrl;
+        }
+    }
+
+    private static void SetProjectDisplayImage(portfolio.Data.ProjectItem project, string image)
+    {
+        if (project is null || string.IsNullOrWhiteSpace(image))
+        {
+            return;
+        }
+
+        project.DisplayImage = image;
+    }
+
+    private static void RemoveProjectImage(portfolio.Data.ProjectItem project, string image)
+    {
+        if (project is null || string.IsNullOrWhiteSpace(image))
+        {
+            return;
+        }
+
+        project.Images.RemoveAll(item => string.Equals(item, image, StringComparison.OrdinalIgnoreCase));
+
+        if (string.Equals(project.DisplayImage, image, StringComparison.OrdinalIgnoreCase))
+        {
+            project.DisplayImage = project.DisplayImageUrl;
+        }
+    }
+
+    private static List<string> ParseList(string? value)
+    {
+        return (value ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+    }
+}

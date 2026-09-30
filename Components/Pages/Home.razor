@@ -1,0 +1,412 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject portfolio.Services.PortfolioService PortfolioService
+@inject IWebHostEnvironment HostEnvironment
+
+<PageTitle>@_portfolio.Name | Portfólio</PageTitle>
+
+<header class="site-header">
+    <div class="topbar shell">
+        <div class="window-tab">
+            <span class="tab-dot"></span>
+            <span class="window-label">PS C:\Portfolio\Home</span>
+            <span class="tab-close">×</span>
+        </div>
+
+        <div class="header-actions">
+            @if (!HostEnvironment.IsProduction())
+            {
+                <a class="chip" href="/admin">
+                    <span>admin_panel</span>
+                    <span>Painel Admin</span>
+                </a>
+            }
+
+            <div class="traffic-lights" aria-label="Navegação de janela">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="subbar shell">
+        <div class="shell-prompt">
+            <span class="prompt-sign">PS &gt;</span>
+            <span>connect</span>
+            <span class="prompt-muted">--session interactive</span>
+        </div>
+
+        <nav class="nav-links" aria-label="Navegação principal">
+            <a href="#sobre">#sobre</a>
+            <a href="#projetos">#projetos</a>
+            <a href="#experiencias">#experience</a>
+            <a href="#skills">#skills</a>
+            <a href="#contato">#contact</a>
+        </nav>
+    </div>
+</header>
+
+<main class="portfolio-shell">
+    <section id="sobre" class="hero-section shell">
+        <div class="hero-copy">
+            <div class="prompt-line">
+                <span class="prompt-sign">PS C:\Dev\Portfolio&gt;</span>
+                <span>Initialize-Session</span>
+                <span class="prompt-muted">-Profile "Principal"</span>
+            </div>
+
+            <h1>
+                Crio <span class="highlight">sistemas</span> e experiências digitais
+                que unem produto, engenharia e clareza.
+            </h1>
+
+            <p class="hero-role">@_portfolio.Title</p>
+            <p class="summary">@_portfolio.Summary</p>
+
+            <div class="cta-row">
+                <a class="primary-btn" href="mailto:@_portfolio.Email">Fale comigo</a>
+                <a class="secondary-btn" href="#projetos">Ver projetos</a>
+            </div>
+
+            <div class="meta-row">
+                <span class="meta-pill">📍 @_portfolio.Location</span>
+                <a href="@_portfolio.Github" target="_blank" rel="noreferrer">GitHub</a>
+                <a href="@_portfolio.LinkedIn" target="_blank" rel="noreferrer">LinkedIn</a>
+            </div>
+        </div>
+
+        <aside class="terminal-panel" aria-label="Resumo do perfil">
+            <div class="terminal-header">
+                <div class="terminal-title">
+                    <span class="terminal-symbol">▣</span>
+                    <span>portfolio.ts</span>
+                </div>
+
+                <div class="terminal-actions" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+
+            <div class="terminal-body">
+                <div class="terminal-line"><span class="terminal-prompt">root@portfolio</span> <span class="terminal-command">./diagnose --profile product</span></div>
+                <div class="terminal-line"><span class="terminal-ok">✔</span> Strategy aligned</div>
+                <div class="terminal-line"><span class="terminal-ok">✔</span> Experience design refined</div>
+                <div class="terminal-line"><span class="terminal-ok">✔</span> Architecture ready for delivery</div>
+
+                <div class="terminal-grid">
+                    <div class="mini-stat">
+                        <strong>12+</strong>
+                        <span>projetos</span>
+                    </div>
+                    <div class="mini-stat">
+                        <strong>+@_portfolio.YearsOfExperience anos</strong>
+                        <span>engenharia</span>
+                    </div>
+                    <div class="mini-stat">
+                        <strong>99.9%</strong>
+                        <span>foco</span>
+                    </div>
+                    <div class="mini-stat">
+                        <strong>.NET, Python, React, Blazor</strong>
+                        <span>stack</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </section>
+
+    <section class="stats-section shell">
+        <div class="stat-card">
+            <span class="metric-label">Experience.Lifespan</span>
+            <strong>@_portfolio.YearsOfExperience + Anos</strong>
+            <small>Arquitetura & engenharia</small>
+        </div>
+        <div class="stat-card">
+            <span class="metric-label">Throughput.Max</span>
+            <strong>45k+ msg/s</strong>
+            <small>Vazão em produção</small>
+        </div>
+        <div class="stat-card">
+            <span class="metric-label">SLA.Target</span>
+            <strong>99.99%</strong>
+            <small>Disponibilidade</small>
+        </div>
+        <div class="stat-card">
+            <span class="metric-label">Solutions.Deployed</span>
+            <strong>18+</strong>
+            <small>Aplicações entregues</small>
+        </div>
+    </section>
+
+    <section id="experiencias" class="section shell">
+        <div class="section-heading">
+            <span class="section-label">#experience</span>
+            <h2>Trajetória em sistemas de alto impacto.</h2>
+        </div>
+
+        <div class="timeline">
+            @foreach (var item in _portfolio.Experience)
+            {
+                <article class="experience-card">
+                    <div class="timeline-node">
+                        <span></span>
+                    </div>
+
+                    <div class="experience-content">
+                        <div class="experience-top">
+                            <div>
+                                <p class="role-name">@item.Role</p>
+                                <p class="company-name">@item.Company</p>
+                            </div>
+                            <span class="period">@item.DisplayPeriod</span>
+                        </div>
+
+                        <p class="experience-text">@item.Description</p>
+
+                        <div class="tag-row">
+                            @foreach (var tech in item.DistinctTech)
+                            {
+                                <span class="tech-tag">@tech</span>
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
+
+    <section id="projetos" class="section shell">
+        <div class="section-heading">
+            <span class="section-label">#projects</span>
+            <h2>Projetos construídos para entregar valor real.</h2>
+        </div>
+
+        <div class="project-grid">
+            @foreach (var project in _portfolio.Projects)
+            {
+                <article class="project-card project-card-clickable"
+                         role="button"
+                         tabindex="0"
+                         @onclick="() => OpenProject(project)"
+                         @onkeydown="e => HandleProjectKeyDown(e, project)">
+                    <div class="project-header">
+                        <span class="project-folder">src/projects/@project.Name.ToLowerInvariant().Replace(" ", "-")</span>
+                        <a href="@project.Link" target="_blank" rel="noreferrer" @onclick:stopPropagation="true">Ver projeto</a>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(project.DisplayImageUrl))
+                    {
+                        <div class="project-visual">
+                            <img src="@project.DisplayImageUrl" alt="@project.Name" />
+                            @if (project.ValidImages.Count > 1)
+                            {
+                                <div class="project-image-count">+@(project.ValidImages.Count - 1) fotos</div>
+                            }
+                        </div>
+                    }
+
+                    <div class="project-body">
+                        <p class="project-name">@project.Name</p>
+                        <p class="project-description">@project.Description</p>
+                    </div>
+
+                    <div class="tag-row">
+                        @foreach (var tech in project.DistinctStack)
+                        {
+                            <span class="stack-tag">@tech</span>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+
+        @if (_selectedProject is not null)
+        {
+            <div class="project-modal-backdrop" @onclick="CloseProject">
+                <div class="project-modal" @onclick:stopPropagation="true" role="dialog" aria-modal="true" aria-labelledby="project-modal-title">
+                    <button type="button" class="project-modal-close" aria-label="Fechar projeto" @onclick="CloseProject">×</button>
+
+                    <div class="project-modal-shell">
+                        <div class="project-modal-hero">
+                            <div>
+                                <span class="project-modal-eyebrow">Case Study</span>
+                                <h3 id="project-modal-title">@_selectedProject.Name</h3>
+                            </div>
+
+                            <a class="primary-btn project-modal-link" href="@_selectedProject.Link" target="_blank" rel="noreferrer">Abrir projeto</a>
+                        </div>
+
+                        <div class="project-modal-visual">
+                            @if (!string.IsNullOrWhiteSpace(_selectedProject.DisplayImageUrl))
+                            {
+                                <img src="@_selectedProject.DisplayImageUrl" alt="@_selectedProject.Name" />
+                            }
+                        </div>
+
+                        <div class="project-modal-metrics">
+                            @foreach (var metric in _selectedProject.KeyMetrics.DefaultIfEmpty("Resultado entregue"))
+                            {
+                                <div class="project-metric-item">
+                                    <strong>@metric</strong>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="project-modal-grid">
+                            <div class="project-modal-panel">
+                                <span class="project-panel-label">Visão geral</span>
+                                <p>@(_selectedProject.CaseStudySummary ?? _selectedProject.Description)</p>
+                            </div>
+
+                            <div class="project-modal-panel">
+                                <span class="project-panel-label">Problema</span>
+                                <p>@(_selectedProject.Problem ?? _selectedProject.Description)</p>
+                            </div>
+                        </div>
+
+                        <div class="project-modal-grid">
+                            <div class="project-modal-panel">
+                                <span class="project-panel-label">Solução</span>
+                                <p>@(_selectedProject.Solution ?? _selectedProject.Description)</p>
+                            </div>
+
+                            <div class="project-modal-panel">
+                                <span class="project-panel-label">Resultado</span>
+                                <p>@(_selectedProject.Result ?? _selectedProject.Description)</p>
+                            </div>
+                        </div>
+
+                        <div class="project-modal-stack">
+                            @foreach (var tech in _selectedProject.DistinctStack)
+                            {
+                                <span class="stack-tag">@tech</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </section>
+
+    <section id="skills" class="section shell">
+        <div class="section-heading">
+            <span class="section-label">#skills</span>
+            <h2>Stack e forma de trabalhar.</h2>
+        </div>
+
+        <div class="skill-grid">
+            <div class="skill-card">
+                <span class="skill-tag">Frontend</span>
+                <ul>
+                    <li>Blazor</li>
+                    <li>HTML/CSS</li>
+                    <li>JavaScript</li>
+                    <li>Design systems</li>
+                </ul>
+            </div>
+            <div class="skill-card">
+                <span class="skill-tag">Backend</span>
+                <ul>
+                    <li>.NET 10</li>
+                    <li>ASP.NET Core</li>
+                    <li>APIs</li>
+                    <li>Integrations</li>
+                </ul>
+            </div>
+            <div class="skill-card">
+                <span class="skill-tag">Product</span>
+                <ul>
+                    <li>UX/UI</li>
+                    <li>Arquitetura</li>
+                    <li>Performance</li>
+                    <li>Entrega</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="contato" class="contact-section">
+        <div class="contact-layout shell">
+            <div class="contact-copy-block">
+                <span class="section-label">#contact</span>
+                <h2>Vamos conversar sobre o próximo projeto.</h2>
+                <p>Se você precisa de um profissional para desenvolver interfaces, produtos digitais ou sistemas de produto, estou disponível para colaborar.</p>
+            </div>
+
+            <div class="contact-card">
+                <EditForm Model="_contactModel" OnSubmit="HandleSubmit">
+                    <div class="field-group">
+                        <label>Seu nome</label>
+                        <InputText @bind-Value="_contactModel.Name" />
+                    </div>
+                    <div class="field-group">
+                        <label>E-mail</label>
+                        <InputText @bind-Value="_contactModel.Email" />
+                    </div>
+                    <div class="field-group">
+                        <label>Mensagem</label>
+                        <InputTextArea @bind-Value="_contactModel.Message" />
+                    </div>
+                    <button type="submit" class="primary-btn full-width">Enviar mensagem</button>
+                    @if (_submitted)
+                    {
+                        <p class="success-message">Mensagem enviada com sucesso. Respondo assim que possível.</p>
+                    }
+                </EditForm>
+            </div>
+        </div>
+    </section>
+</main>
+
+@code {
+    private portfolio.Data.PortfolioData _portfolio = new();
+    private ContactFormModel _contactModel = new();
+    private bool _submitted;
+    private portfolio.Data.ProjectItem? _selectedProject;
+
+    protected override void OnInitialized()
+    {
+        _portfolio = PortfolioService.GetPortfolio();
+    }
+
+    private void OpenProject(portfolio.Data.ProjectItem project)
+    {
+        _selectedProject = project;
+    }
+
+    private void CloseProject()
+    {
+        _selectedProject = null;
+    }
+
+    private void HandleProjectKeyDown(KeyboardEventArgs e, portfolio.Data.ProjectItem project)
+    {
+        if (e.Key == "Enter" || e.Key == " ")
+        {
+            OpenProject(project);
+        }
+    }
+
+    private void HandleSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(_contactModel.Name) ||
+            string.IsNullOrWhiteSpace(_contactModel.Email) ||
+            string.IsNullOrWhiteSpace(_contactModel.Message))
+        {
+            return;
+        }
+
+        _submitted = true;
+        _contactModel = new ContactFormModel();
+    }
+
+    private class ContactFormModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+    }
+}

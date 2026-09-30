@@ -239,12 +239,17 @@
                             <a class="primary-btn project-modal-link" href="@_selectedProject.Link" target="_blank" rel="noreferrer">Abrir projeto</a>
                         </div>
 
-                        <div class="project-modal-visual">
-                            @if (!string.IsNullOrWhiteSpace(_selectedProject.DisplayImageUrl))
-                            {
-                                <img src="@_selectedProject.DisplayImageUrl" alt="@_selectedProject.Name" />
-                            }
-                        </div>
+                        @if (_selectedProject.ValidImages.Count > 0)
+                        {
+                            <div class="project-modal-gallery">
+                                @foreach (var image in _selectedProject.ValidImages)
+                                {
+                                    <div class="project-modal-gallery-item">
+                                        <img src="@image" alt="@_selectedProject.Name" />
+                                    </div>
+                                }
+                            </div>
+                        }
 
                         <div class="project-modal-metrics">
                             @foreach (var metric in _selectedProject.KeyMetrics.DefaultIfEmpty("Resultado entregue"))

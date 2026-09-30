@@ -1,6 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Electrolize&family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 :root {
+    --font-terminal: "Cascadia Code", "Fira Code", "JetBrains Mono", "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace;
     --bg-primary: #0a0e14;
     --bg-secondary: #111827;
     --bg-card: rgba(18, 24, 34, 0.88);
@@ -31,7 +32,11 @@ body {
         radial-gradient(circle at bottom right, rgba(100, 255, 191, 0.08), transparent 22%),
         var(--bg-primary);
     color: var(--text-primary);
-    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-family: var(--font-terminal);
+    font-feature-settings: "liga" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
 }
 
 * {
@@ -208,6 +213,10 @@ textarea {
     gap: 2.5rem;
     align-items: center;
     padding: 4rem 0 2.5rem;
+}
+
+.hero-title {
+    font-family: 'Electrolize', sans-serif;
 }
 
 .hero-copy {

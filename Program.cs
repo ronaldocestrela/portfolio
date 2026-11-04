@@ -32,7 +32,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 
-if (!app.Environment.IsDevelopment())
+var disableHttpsRedirection = string.Equals(
+    builder.Configuration["DISABLE_HTTPS_REDIRECTION"] ?? Environment.GetEnvironmentVariable("DISABLE_HTTPS_REDIRECTION"),
+    "true",
+    StringComparison.OrdinalIgnoreCase);
+
+if (!app.Environment.IsDevelopment() && !disableHttpsRedirection)
 {
     app.UseHttpsRedirection();
 }
@@ -77,6 +82,9 @@ static void LoadDotEnv()
             value = value[1..^1];
         }
 
-        Environment.SetEnvironmentVariable(key, value);
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(key)))
+        {
+            Environment.SetEnvironmentVariable(key, value);
+        }
     }
 }

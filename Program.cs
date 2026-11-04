@@ -14,7 +14,11 @@ builder.Services.AddDbContext<PortfolioDbContext>(options =>
         ?? "Data Source=data/portfolio.db"));
 
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents()
+    .AddHubOptions(options =>
+    {
+        options.MaximumReceiveMessageSize = 32 * 1024 * 1024; // 32MB
+    });
 
 builder.Services.AddScoped<PortfolioService>();
 
@@ -33,6 +37,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseStaticFiles();
 app.UseAntiforgery();
 
 app.MapStaticAssets();

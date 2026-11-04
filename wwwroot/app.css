@@ -1179,6 +1179,312 @@ input[type="file"] {
     padding: 0.8rem 0.9rem;
 }
 
+/* Acessibilidade */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* 1. Título principal com digitação e cursor em bloco */
+.hero-title {
+    position: relative;
+    display: grid;
+    align-items: start;
+}
+
+.hero-title-reserve {
+    grid-area: 1 / 1;
+    visibility: hidden;
+    pointer-events: none;
+    user-select: none;
+}
+
+.hero-title-live {
+    grid-area: 1 / 1;
+}
+
+.cmd-cursor {
+    display: inline-block;
+    margin-left: 0.08em;
+    color: var(--highlight);
+    font-family: var(--font-terminal);
+    font-weight: 700;
+    line-height: 1;
+    animation: cmd-cursor-blink 1s step-end infinite;
+}
+
+@keyframes cmd-cursor-blink {
+    0%, 49% {
+        opacity: 1;
+    }
+    50%, 100% {
+        opacity: 0;
+    }
+}
+
+/* 2. Indicadores numéricos com alinhamento tabular */
+.stat-card strong {
+    font-variant-numeric: tabular-nums;
+}
+
+/* 3. Janela de detalhes do projeto como terminal CMD */
+.project-modal-hero {
+    padding-right: 3.4rem;
+}
+
+.project-modal-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.terminal-action-btn,
+.terminal-inline-skip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(14, 53, 157, 0.45);
+    background: rgba(9, 15, 28, 0.88);
+    color: var(--text-secondary);
+    border-radius: 0.65rem;
+    padding: 0.5rem 0.85rem;
+    font-family: var(--font-terminal);
+    font-size: 0.76rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.terminal-action-btn:hover,
+.terminal-inline-skip:hover {
+    border-color: var(--highlight);
+    color: var(--text-primary);
+    background: rgba(14, 53, 157, 0.22);
+}
+
+.project-terminal-window {
+    border: 1px solid rgba(14, 53, 157, 0.38);
+    border-radius: 1.1rem;
+    background: rgba(7, 11, 20, 0.94);
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.project-terminal-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid rgba(14, 53, 157, 0.28);
+    background: rgba(9, 15, 28, 0.95);
+}
+
+.project-terminal-title {
+    font-family: var(--font-terminal);
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    letter-spacing: 0.03em;
+}
+
+.terminal-inline-skip {
+    padding: 0.28rem 0.65rem;
+    font-size: 0.7rem;
+}
+
+.project-terminal-body {
+    max-height: 58vh;
+    overflow-y: auto;
+    padding: 1.25rem 1.2rem;
+    font-family: var(--font-terminal);
+    font-size: 0.86rem;
+    line-height: 1.75;
+    color: var(--text-secondary);
+    display: grid;
+    gap: 1rem;
+}
+
+.cmd-output-line {
+    word-break: break-word;
+}
+
+.cmd-command-line {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.cmd-prompt-prefix {
+    color: var(--primary-bright);
+    font-weight: 700;
+    margin-right: 0.45rem;
+}
+
+.cmd-status-line {
+    color: var(--highlight);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.cmd-status-done {
+    color: var(--success);
+}
+
+.cmd-section-block {
+    display: grid;
+    gap: 0.3rem;
+    padding-left: 0.65rem;
+    border-left: 2px solid rgba(14, 53, 157, 0.4);
+}
+
+.cmd-section-header {
+    color: var(--highlight);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.cmd-section-body {
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.cmd-final-prompt {
+    padding-top: 0.2rem;
+}
+
+/* 4. Seção de Stacks e Ferramentas com comando /help */
+.skills-cmd-container {
+    display: grid;
+    gap: 1rem;
+}
+
+.skills-cmd-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid rgba(14, 53, 157, 0.38);
+    border-radius: 0.95rem;
+    background: rgba(7, 11, 20, 0.9);
+    font-family: var(--font-terminal);
+}
+
+.skills-cmd-bar:focus-within {
+    border-color: var(--highlight);
+    box-shadow: 0 0 0 3px rgba(255, 96, 106, 0.18);
+}
+
+.skills-cmd-prefix {
+    color: var(--primary-bright);
+    font-weight: 700;
+    font-size: 0.84rem;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.skills-cmd-input {
+    flex: 1;
+    min-width: 120px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-terminal);
+    font-size: 0.86rem;
+    padding: 0.25rem 0;
+}
+
+.skills-cmd-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.75;
+}
+
+.skills-cmd-input:focus {
+    outline: none;
+}
+
+.skills-cmd-log {
+    min-height: 3.1rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 0.85rem;
+    border: 1px solid rgba(14, 53, 157, 0.22);
+    background: rgba(9, 15, 28, 0.72);
+    font-family: var(--font-terminal);
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.skills-cmd-hint,
+.skills-cmd-error,
+.skills-cmd-status {
+    margin: 0;
+}
+
+.skills-cmd-hint {
+    color: var(--text-muted);
+}
+
+.skills-cmd-line {
+    color: var(--text-primary);
+}
+
+.skills-cmd-error {
+    color: var(--highlight);
+}
+
+.skills-cmd-status {
+    color: var(--success);
+}
+
+.skills-terminal-stage {
+    min-height: 220px;
+}
+
+.skill-card-hidden {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.skill-card-visible {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.18s ease;
+}
+
+.skill-item-hidden {
+    visibility: hidden;
+    opacity: 0;
+}
+
+.skill-item-visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .cmd-cursor {
+        animation: none;
+    }
+
+    .skill-card-visible {
+        transition: none;
+    }
+}
+
 @media (max-width: 980px) {
     .subbar {
         display: none;
@@ -1203,6 +1509,7 @@ input[type="file"] {
     .project-modal-hero {
         flex-direction: column;
         align-items: flex-start;
+        padding-right: 1rem;
     }
 
     .hero-section {
@@ -1252,5 +1559,13 @@ input[type="file"] {
 
     .section {
         padding: 4rem 0;
+    }
+
+    .skills-cmd-bar {
+        flex-wrap: wrap;
+    }
+
+    .skills-cmd-btn {
+        width: 100%;
     }
 }

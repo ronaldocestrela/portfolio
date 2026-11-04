@@ -21,17 +21,19 @@
             <section class="admin-card" style="max-width: 420px; margin: 0 auto;">
                 <h2>Entre com a senha</h2>
 
-                <div class="form-group">
-                    <label>Senha</label>
-                    <input type="password" @bind="_passwordInput" @bind:event="oninput" @onkeydown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter") await ValidatePassword(); })" placeholder="Digite a senha do admin" />
-                </div>
+                <form @onsubmit="ValidatePassword">
+                    <div class="form-group">
+                        <label>Senha</label>
+                        <input type="password" @bind="_passwordInput" placeholder="Digite a senha do admin" />
+                    </div>
 
-                @if (!string.IsNullOrWhiteSpace(_statusMessage))
-                {
-                    <div class="status-banner">@_statusMessage</div>
-                }
+                    @if (!string.IsNullOrWhiteSpace(_statusMessage))
+                    {
+                        <div class="status-banner">@_statusMessage</div>
+                    }
 
-                <button class="primary-btn" type="button" @onclick="ValidatePassword">Entrar</button>
+                    <button class="primary-btn" type="submit">Entrar</button>
+                </form>
             </section>
         </div>
     </main>
@@ -63,42 +65,42 @@ else
 
                 <div class="form-group">
                     <label>Nome</label>
-                    <input value="@_portfolio.Name" @oninput="e => _portfolio.Name = e.Value?.ToString() ?? string.Empty" />
+                    <input @bind="_portfolio.Name" />
                 </div>
 
                 <div class="form-group">
                     <label>Cargo</label>
-                    <input value="@_portfolio.Title" @oninput="e => _portfolio.Title = e.Value?.ToString() ?? string.Empty" />
+                    <input @bind="_portfolio.Title" />
                 </div>
 
                 <div class="form-group">
                     <label>Localização</label>
-                    <input value="@_portfolio.Location" @oninput="e => _portfolio.Location = e.Value?.ToString() ?? string.Empty" />
+                    <input @bind="_portfolio.Location" />
                 </div>
 
                 <div class="form-group">
                     <label>E-mail</label>
-                    <input value="@_portfolio.Email" @oninput="e => _portfolio.Email = e.Value?.ToString() ?? string.Empty" />
+                    <input @bind="_portfolio.Email" />
                 </div>
 
                 <div class="form-group">
                     <label>Badge principal</label>
-                    <input value="@_portfolio.HeroBadge" @oninput="e => _portfolio.HeroBadge = e.Value?.ToString() ?? string.Empty" />
+                    <input @bind="_portfolio.HeroBadge" />
                 </div>
 
                 <div class="form-group">
                     <label>GitHub</label>
-                    <input value="@_portfolio.Github" @oninput="e => _portfolio.Github = e.Value?.ToString() ?? string.Empty" />
+                    <input @bind="_portfolio.Github" />
                 </div>
 
                 <div class="form-group">
                     <label>LinkedIn</label>
-                    <input value="@_portfolio.LinkedIn" @oninput="e => _portfolio.LinkedIn = e.Value?.ToString() ?? string.Empty" />
+                    <input @bind="_portfolio.LinkedIn" />
                 </div>
 
                 <div class="form-group">
                     <label>Resumo</label>
-                    <textarea rows="5" value="@_portfolio.Summary" @oninput="e => _portfolio.Summary = e.Value?.ToString() ?? string.Empty"></textarea>
+                    <textarea rows="5" @bind="_portfolio.Summary"></textarea>
                 </div>
             </section>
 
@@ -120,14 +122,14 @@ else
                         </div>
 
                         <div class="inline-grid">
-                            <input value="@experience.item.Role" @oninput="e => experience.item.Role = e.Value?.ToString() ?? string.Empty" placeholder="Cargo" />
-                            <input value="@experience.item.Company" @oninput="e => experience.item.Company = e.Value?.ToString() ?? string.Empty" placeholder="Empresa" />
-                            <input type="month" value="@ToMonthInputValue(experience.item.StartDate)" @oninput="e => experience.item.StartDate = FromMonthInputValue(e.Value?.ToString())" placeholder="mm/YYYY" />
-                            <input type="month" value="@ToMonthInputValue(experience.item.EndDate)" @oninput="e => experience.item.EndDate = FromMonthInputValue(e.Value?.ToString())" placeholder="mm/YYYY ou vazio para Atual" />
-                            <input value="@string.Join(", ", experience.item.Tech)" @oninput="e => experience.item.Tech = ParseList(e.Value?.ToString())" placeholder="Tecnologias" />
+                            <input @bind="experience.item.Role" placeholder="Cargo" />
+                            <input @bind="experience.item.Company" placeholder="Empresa" />
+                            <input type="month" value="@ToMonthInputValue(experience.item.StartDate)" @onchange="e => experience.item.StartDate = FromMonthInputValue(e.Value?.ToString())" placeholder="mm/YYYY" />
+                            <input type="month" value="@ToMonthInputValue(experience.item.EndDate)" @onchange="e => experience.item.EndDate = FromMonthInputValue(e.Value?.ToString())" placeholder="mm/YYYY ou vazio para Atual" />
+                            <input value="@string.Join(", ", experience.item.Tech)" @onchange="e => experience.item.Tech = ParseList(e.Value?.ToString())" placeholder="Tecnologias" />
                         </div>
 
-                        <textarea rows="4" value="@experience.item.Description" @oninput="e => experience.item.Description = e.Value?.ToString() ?? string.Empty" placeholder="Descrição da experiência"></textarea>
+                        <textarea rows="4" @bind="experience.item.Description" placeholder="Descrição da experiência"></textarea>
                     </div>
                 }
             </section>
@@ -151,15 +153,15 @@ else
                             }
                         </div>
 
-                        <input value="@project.item.Name" @oninput="e => project.item.Name = e.Value?.ToString() ?? string.Empty" placeholder="Nome do projeto" />
-                        <textarea rows="4" value="@project.item.Description" @oninput="e => project.item.Description = e.Value?.ToString() ?? string.Empty" placeholder="Descrição do projeto"></textarea>
-                        <textarea rows="4" value="@project.item.CaseStudySummary" @oninput="e => project.item.CaseStudySummary = e.Value?.ToString() ?? string.Empty" placeholder="Visão geral do projeto"></textarea>
-                        <textarea rows="4" value="@project.item.ArchitectureDescription" @oninput="e => project.item.ArchitectureDescription = e.Value?.ToString() ?? string.Empty" placeholder="Explicação da arquitetura do projeto"></textarea>
-                        <textarea rows="4" value="@project.item.Problem" @oninput="e => project.item.Problem = e.Value?.ToString() ?? string.Empty" placeholder="Problema do projeto"></textarea>
-                        <textarea rows="4" value="@project.item.Solution" @oninput="e => project.item.Solution = e.Value?.ToString() ?? string.Empty" placeholder="Solução implementada"></textarea>
-                        <textarea rows="4" value="@project.item.Result" @oninput="e => project.item.Result = e.Value?.ToString() ?? string.Empty" placeholder="Resultado alcançado"></textarea>
-                        <input value="@string.Join(", ", project.item.Stack)" @oninput="e => project.item.Stack = ParseList(e.Value?.ToString())" placeholder="Tecnologias" />
-                        <input value="@project.item.Link" @oninput="e => project.item.Link = e.Value?.ToString() ?? string.Empty" placeholder="Link do projeto" />
+                        <input @bind="project.item.Name" placeholder="Nome do projeto" />
+                        <textarea rows="4" @bind="project.item.Description" placeholder="Descrição do projeto"></textarea>
+                        <textarea rows="4" @bind="project.item.CaseStudySummary" placeholder="Visão geral do projeto"></textarea>
+                        <textarea rows="4" @bind="project.item.ArchitectureDescription" placeholder="Explicação da arquitetura do projeto"></textarea>
+                        <textarea rows="4" @bind="project.item.Problem" placeholder="Problema do projeto"></textarea>
+                        <textarea rows="4" @bind="project.item.Solution" placeholder="Solução implementada"></textarea>
+                        <textarea rows="4" @bind="project.item.Result" placeholder="Resultado alcançado"></textarea>
+                        <input value="@string.Join(", ", project.item.Stack)" @onchange="e => project.item.Stack = ParseList(e.Value?.ToString())" placeholder="Tecnologias" />
+                        <input @bind="project.item.Link" placeholder="Link do projeto" />
 
                         <div class="project-media-block">
                             <div class="project-image-grid">

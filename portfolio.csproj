@@ -19,4 +19,10 @@
     <EmbeddedResource Remove="Portfolio.Tests/**/*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Watch Remove="wwwroot/uploads/**" />
+    <Watch Remove="data/**" />
+    <Content Update="wwwroot/uploads/**" Watch="false" />
+  </ItemGroup>
+
 </Project>

@@ -1,7 +1,9 @@
-﻿@page "/"
+@page "/"
 @rendermode InteractiveServer
+@implements IAsyncDisposable
 @inject portfolio.Services.PortfolioService PortfolioService
 @inject IWebHostEnvironment HostEnvironment
+@inject IJSRuntime JSRuntime
 
 <PageTitle>@_portfolio.Name | Portfólio</PageTitle>
 
@@ -56,9 +58,16 @@
                 <span class="prompt-muted">-Profile "Principal"</span>
             </div>
 
-            <h1 class="hero-title">
-                Crio <span class="highlight">sistemas</span> e experiências digitais
-                que unem produto, engenharia e clareza.
+            <h1 class="hero-title" aria-label="@HeroFullText">
+                <span class="sr-only">@HeroFullText</span>
+                <span class="hero-title-reserve" aria-hidden="true">
+                    Crio <span class="highlight">sistemas</span> e experiências digitais
+                    que unem produto, engenharia e clareza.<span class="cmd-cursor">█</span>
+                </span>
+                <span class="hero-title-live" aria-hidden="true">
+                    @GetHeroTypedPrefix()@if (_heroTypedLength > HeroPrefixText.Length)
+                    {<span class="highlight">@GetHeroTypedHighlight()</span>}@GetHeroTypedSuffix()<span class="cmd-cursor">█</span>
+                </span>
             </h1>
 
             <p class="hero-role">@_portfolio.Title</p>
@@ -118,25 +127,33 @@
         </aside>
     </section>
 
-    <section class="stats-section shell">
+    <section class="stats-section shell" @ref="_statsSectionRef">
         <div class="stat-card">
             <span class="metric-label">Experience.Lifespan</span>
-            <strong>@_portfolio.YearsOfExperience + Anos</strong>
+            <strong aria-label="@($"{_portfolio.YearsOfExperience} + Anos")">
+                <span class="stat-counter" data-target="@_portfolio.YearsOfExperience" data-decimals="0">0</span> + Anos
+            </strong>
             <small>Arquitetura & engenharia</small>
         </div>
         <div class="stat-card">
             <span class="metric-label">Throughput.Max</span>
-            <strong>45k+ msg/s</strong>
+            <strong aria-label="45k+ msg/s">
+                <span class="stat-counter" data-target="45" data-decimals="0">0</span>k+ msg/s
+            </strong>
             <small>Vazão em produção</small>
         </div>
         <div class="stat-card">
             <span class="metric-label">SLA.Target</span>
-            <strong>99.99%</strong>
+            <strong aria-label="99.99%">
+                <span class="stat-counter" data-target="99.99" data-decimals="2">0.00</span>%
+            </strong>
             <small>Disponibilidade</small>
         </div>
         <div class="stat-card">
             <span class="metric-label">Solutions.Deployed</span>
-            <strong>18+</strong>
+            <strong aria-label="18+">
+                <span class="stat-counter" data-target="18" data-decimals="0">0</span>+
+            </strong>
             <small>Aplicações entregues</small>
         </div>
     </section>
@@ -236,7 +253,13 @@
                                 <h3 id="project-modal-title">@_selectedProject.Name</h3>
                             </div>
 
-                            <a class="primary-btn project-modal-link" href="@_selectedProject.Link" target="_blank" rel="noreferrer">Abrir projeto</a>
+                            <div class="project-modal-actions">
+                                @if (!_projectTerminalCompleted)
+                                {
+                                    <button type="button" class="terminal-action-btn" @onclick="CompleteProjectTerminal">Exibir tudo</button>
+                                }
+                                <a class="primary-btn project-modal-link" href="@_selectedProject.Link" target="_blank" rel="noreferrer">Abrir projeto</a>
+                            </div>
                         </div>
 
                         @if (_selectedProject.ValidImages.Count > 0)
@@ -251,91 +274,69 @@
                             </div>
                         }
 
-                        <div class="project-modal-metrics">
-                            @foreach (var metric in _selectedProject.KeyMetrics.DefaultIfEmpty("Resultado entregue"))
-                            {
-                                <div class="project-metric-item">
-                                    <strong>@metric</strong>
-                                </div>
-                            }
-                        </div>
-
-                        <div class="project-modal-grid">
-                            <div class="project-modal-panel">
-                                <span class="project-panel-label">Visão geral</span>
-                                @if (string.IsNullOrWhiteSpace(_selectedProject.CaseStudySummary))
+                        <div class="project-terminal-window" aria-live="off">
+                            <div class="project-terminal-topbar">
+                                <span class="project-terminal-title">C:\Windows\System32\cmd.exe — project open</span>
+                                @if (!_projectTerminalCompleted)
                                 {
-                                    <p>Visão geral não informada.</p>
-                                }
-                                else
-                                {
-                                    <div class="project-markdown">@portfolio.Services.MarkdownRenderer.Render(_selectedProject.CaseStudySummary)</div>
+                                    <button type="button" class="terminal-inline-skip" @onclick="CompleteProjectTerminal">Exibir tudo</button>
                                 }
                             </div>
 
-                            <div class="project-modal-panel">
-                                <span class="project-panel-label">Arquitetura</span>
-                                @if (string.IsNullOrWhiteSpace(_selectedProject.ArchitectureDescription))
+                            <div class="project-terminal-body">
+                                @if (_projectCommandVisible)
                                 {
-                                    <p>Arquitetura do projeto não informada.</p>
+                                    <div class="cmd-output-line cmd-command-line">
+                                        <span class="cmd-prompt-prefix">C:\Portfolio&gt;</span>
+                                        <span>@_projectCommandText[.._projectCommandTypedLength]</span>@if (_projectActiveCursorStage == ProjectCursorStage.Command)
+                                        {<span class="cmd-cursor" aria-hidden="true">█</span>}
+                                    </div>
                                 }
-                                else
+
+                                @if (_projectLoadingVisible)
                                 {
-                                    <div class="project-markdown">@portfolio.Services.MarkdownRenderer.Render(_selectedProject.ArchitectureDescription)</div>
+                                    <div class="cmd-output-line cmd-status-line">
+                                        <span>@_projectLoadingText[.._projectLoadingTypedLength]</span>@if (_projectActiveCursorStage == ProjectCursorStage.Loading)
+                                        {<span class="cmd-cursor" aria-hidden="true">█</span>}
+                                    </div>
+                                }
+
+                                @foreach (var block in _projectTerminalBlocks)
+                                {
+                                    @if (block.IsHeaderVisible)
+                                    {
+                                        <div class="cmd-section-block">
+                                            <div class="cmd-section-header">
+                                                <span>@block.Header[..block.HeaderTypedLength]</span>@if (block.IsCursorOnHeader)
+                                                {<span class="cmd-cursor" aria-hidden="true">█</span>}
+                                            </div>
+                                            @if (block.IsBodyVisible)
+                                            {
+                                                <div class="cmd-section-body">
+                                                    <span>@block.Body[..block.BodyTypedLength]</span>@if (block.IsCursorOnBody)
+                                                    {<span class="cmd-cursor" aria-hidden="true">█</span>}
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                }
+
+                                @if (_projectDoneVisible)
+                                {
+                                    <div class="cmd-output-line cmd-status-line cmd-status-done">
+                                        <span>@_projectDoneText[.._projectDoneTypedLength]</span>@if (_projectActiveCursorStage == ProjectCursorStage.Done)
+                                        {<span class="cmd-cursor" aria-hidden="true">█</span>}
+                                    </div>
+                                }
+
+                                @if (_projectTerminalCompleted)
+                                {
+                                    <div class="cmd-output-line cmd-final-prompt">
+                                        <span class="cmd-prompt-prefix">C:\Portfolio&gt;</span>
+                                        <span class="cmd-cursor" aria-hidden="true">█</span>
+                                    </div>
                                 }
                             </div>
-                        </div>
-
-                        <div class="project-modal-grid">
-                            <div class="project-modal-panel">
-                                <span class="project-panel-label">Problema</span>
-                                @if (string.IsNullOrWhiteSpace(_selectedProject.Problem))
-                                {
-                                    <p>Problema não informado.</p>
-                                }
-                                else
-                                {
-                                    <div class="project-markdown">@portfolio.Services.MarkdownRenderer.Render(_selectedProject.Problem)</div>
-                                }
-                            </div>
-
-                            <div class="project-modal-panel">
-                                <span class="project-panel-label">Solução</span>
-                                @if (string.IsNullOrWhiteSpace(_selectedProject.Solution))
-                                {
-                                    <p>Solução não informada.</p>
-                                }
-                                else
-                                {
-                                    <div class="project-markdown">@portfolio.Services.MarkdownRenderer.Render(_selectedProject.Solution)</div>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="project-modal-grid">
-                            <div class="project-modal-panel">
-                                <span class="project-panel-label">Resultado</span>
-                                @if (string.IsNullOrWhiteSpace(_selectedProject.Result))
-                                {
-                                    <p>Resultado não informado.</p>
-                                }
-                                else
-                                {
-                                    <div class="project-markdown">@portfolio.Services.MarkdownRenderer.Render(_selectedProject.Result)</div>
-                                }
-                            </div>
-
-                            <div class="project-modal-panel">
-                                <span class="project-panel-label">Tecnologias</span>
-                                <div class="project-markdown"><p>@string.Join(", ", _selectedProject.DistinctStack)</p></div>
-                            </div>
-                        </div>
-
-                        <div class="project-modal-stack">
-                            @foreach (var tech in _selectedProject.DistinctStack)
-                            {
-                                <span class="stack-tag">@tech</span>
-                            }
                         </div>
                     </div>
                 </div>
@@ -349,33 +350,64 @@
             <h2>Stack e forma de trabalhar.</h2>
         </div>
 
-        <div class="skill-grid">
-            <div class="skill-card">
-                <span class="skill-tag">Frontend</span>
-                <ul>
-                    <li>Blazor</li>
-                    <li>HTML/CSS</li>
-                    <li>JavaScript</li>
-                    <li>Design systems</li>
-                </ul>
+        <div class="skills-cmd-container">
+            <form class="skills-cmd-bar" @onsubmit="ExecuteSkillsCommandAsync" @onsubmit:preventDefault="true">
+                <label for="skills-command-input" class="skills-cmd-prefix">C:\Portfolio\skills&gt;</label>
+                <input id="skills-command-input"
+                       type="text"
+                       class="skills-cmd-input"
+                       placeholder="Digite /help"
+                       autocomplete="off"
+                       spellcheck="false"
+                       @bind="_skillsCommandInput"
+                       @bind:event="oninput" />
+                <button type="submit" class="terminal-action-btn skills-cmd-btn">Executar</button>
+            </form>
+
+            <div class="skills-cmd-log" aria-live="polite">
+                @if (string.IsNullOrEmpty(_skillsExecutedCommand) && string.IsNullOrEmpty(_skillsErrorMessage))
+                {
+                    <p class="skills-cmd-hint">Digite /help e pressione Enter</p>
+                }
+                else
+                {
+                    <div class="skills-cmd-line">
+                        <span class="cmd-prompt-prefix">C:\Portfolio\skills&gt;</span>
+                        <span>@_skillsExecutedCommand</span>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_skillsErrorMessage))
+                    {
+                        <p class="skills-cmd-error">@_skillsErrorMessage</p>
+                    }
+                    else if (_skillsShowLoadingLine)
+                    {
+                        <p class="skills-cmd-status">[CARREGANDO STACKS E FERRAMENTAS...]</p>
+                    }
+                }
             </div>
-            <div class="skill-card">
-                <span class="skill-tag">Backend</span>
-                <ul>
-                    <li>.NET 10</li>
-                    <li>ASP.NET Core</li>
-                    <li>APIs</li>
-                    <li>Integrations</li>
-                </ul>
-            </div>
-            <div class="skill-card">
-                <span class="skill-tag">Product</span>
-                <ul>
-                    <li>UX/UI</li>
-                    <li>Arquitetura</li>
-                    <li>Performance</li>
-                    <li>Entrega</li>
-                </ul>
+
+            <div class="skills-terminal-stage">
+                <div class="skill-grid" aria-hidden="@(!_skillsCardsActivated)">
+                    @foreach (var card in _skillCards)
+                    {
+                        <div class="skill-card @(card.IsVisible ? "skill-card-visible" : "skill-card-hidden")">
+                            <span class="skill-tag">
+                                @card.GetVisibleTitle()@if (card.IsCursorOnTitle)
+                                {<span class="cmd-cursor" aria-hidden="true">█</span>}
+                            </span>
+                            <ul>
+                                @foreach (var item in card.Items)
+                                {
+                                    <li class="@(item.IsVisible ? "skill-item-visible" : "skill-item-hidden")">
+                                        <span>@item.GetVisibleText()</span>@if (item.IsCursorActive)
+                                        {<span class="cmd-cursor" aria-hidden="true">█</span>}
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </section>
@@ -414,24 +446,239 @@
 </main>
 
 @code {
+    // =========================================================================
+    // CONFIGURAÇÃO DE VELOCIDADES DAS ANIMAÇÕES (em milissegundos)
+    // =========================================================================
+    private const int HeroTypingCharDelayMs = 65;       // Velocidade de digitação do título principal (ms por caractere)
+    private const int HeroCompletedPauseMs = 4000;      // Pausa após concluir o título principal antes de reiniciar (4s)
+    private const int HeroRestartPauseMs = 200;         // Breve pausa após apagar o título antes de digitar novamente
+    private const int StatsCountDurationMs = 1800;      // Duração da contagem dos indicadores numéricos (1,8s)
+    private const int ProjectTypingCharDelayMs = 15;    // Velocidade de digitação dos detalhes do projeto (~15ms por caractere)
+    private const int ProjectBlockPauseMs = 120;        // Pausa curta entre blocos no terminal do projeto
+    private const int SkillsLoadingPauseMs = 180;       // Pausa da linha de carregamento após executar /help
+    private const int SkillsTypingCharDelayMs = 22;     // Velocidade de digitação dos cards de stacks (/help)
+    private const int SkillsItemPauseMs = 55;           // Pausa entre itens/cards na saída do comando /help
+
+    // Textos originais do título principal
+    private const string HeroPrefixText = "Crio ";
+    private const string HeroHighlightText = "sistemas";
+    private const string HeroSuffixText = " e experiências digitais que unem produto, engenharia e clareza.";
+    private const string HeroFullText = HeroPrefixText + HeroHighlightText + HeroSuffixText;
+
     private portfolio.Data.PortfolioData _portfolio = new();
     private ContactFormModel _contactModel = new();
     private bool _submitted;
     private portfolio.Data.ProjectItem? _selectedProject;
+
+    private ElementReference _statsSectionRef;
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<Home>? _dotNetRef;
+    private bool _prefersReducedMotion;
+    private bool _isDisposed;
+
+    // Estado 1: Digitação do título principal
+    private int _heroTypedLength = HeroFullText.Length;
+    private CancellationTokenSource? _heroCts;
+    private bool _heroLoopStarted;
+
+    // Estado 3: Terminal de detalhes do projeto
+    private CancellationTokenSource? _projectTerminalCts;
+    private int _projectSessionId;
+    private bool _projectCommandVisible;
+    private string _projectCommandText = string.Empty;
+    private int _projectCommandTypedLength;
+    private bool _projectLoadingVisible;
+    private readonly string _projectLoadingText = "[CARREGANDO PROJETO...]";
+    private int _projectLoadingTypedLength;
+    private List<ProjectTerminalBlock> _projectTerminalBlocks = [];
+    private bool _projectDoneVisible;
+    private readonly string _projectDoneText = "[LEITURA CONCLUÍDA]";
+    private int _projectDoneTypedLength;
+    private bool _projectTerminalCompleted;
+    private ProjectCursorStage _projectActiveCursorStage = ProjectCursorStage.None;
+
+    // Estado 4: Comando /help nas stacks e ferramentas
+    private string _skillsCommandInput = string.Empty;
+    private string _skillsExecutedCommand = string.Empty;
+    private string? _skillsErrorMessage;
+    private bool _skillsShowLoadingLine;
+    private bool _skillsCardsActivated;
+    private List<SkillCardState> _skillCards = CreateInitialSkillCards();
+    private CancellationTokenSource? _skillsCts;
+    private int _skillsSessionId;
 
     protected override void OnInitialized()
     {
         _portfolio = PortfolioService.GetPortfolio();
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _isDisposed)
+        {
+            return;
+        }
+
+        try
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./Components/Pages/Home.razor.js");
+            _prefersReducedMotion = await _jsModule.InvokeAsync<bool>("isReducedMotion");
+            await _jsModule.InvokeVoidAsync("initHomeInteractions", _statsSectionRef, _dotNetRef, StatsCountDurationMs);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            return;
+        }
+
+        if (_prefersReducedMotion)
+        {
+            _heroTypedLength = HeroFullText.Length;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        StartHeroTypingLoop();
+    }
+
+    [JSInvokable]
+    public async Task OnReducedMotionChanged(bool reducedMotion)
+    {
+        _prefersReducedMotion = reducedMotion;
+
+        if (_prefersReducedMotion)
+        {
+            CancelAndDispose(ref _heroCts);
+            _heroLoopStarted = false;
+            _heroTypedLength = HeroFullText.Length;
+
+            if (_selectedProject is not null && !_projectTerminalCompleted)
+            {
+                CompleteProjectTerminal();
+            }
+
+            if (_skillsCardsActivated)
+            {
+                CompleteSkillsCardsImmediately();
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+        else if (!_heroLoopStarted && !_isDisposed)
+        {
+            StartHeroTypingLoop();
+        }
+    }
+
+    // =========================================================================
+    // 1. TÍTULO PRINCIPAL COM DIGITAÇÃO
+    // =========================================================================
+    private string GetHeroTypedPrefix()
+    {
+        var count = Math.Clamp(_heroTypedLength, 0, HeroPrefixText.Length);
+        return HeroPrefixText[..count];
+    }
+
+    private string GetHeroTypedHighlight()
+    {
+        if (_heroTypedLength <= HeroPrefixText.Length)
+        {
+            return string.Empty;
+        }
+
+        var count = Math.Clamp(_heroTypedLength - HeroPrefixText.Length, 0, HeroHighlightText.Length);
+        return HeroHighlightText[..count];
+    }
+
+    private string GetHeroTypedSuffix()
+    {
+        var prefixAndHighlightLength = HeroPrefixText.Length + HeroHighlightText.Length;
+        if (_heroTypedLength <= prefixAndHighlightLength)
+        {
+            return string.Empty;
+        }
+
+        var count = Math.Clamp(_heroTypedLength - prefixAndHighlightLength, 0, HeroSuffixText.Length);
+        return HeroSuffixText[..count];
+    }
+
+    private void StartHeroTypingLoop()
+    {
+        if (_heroLoopStarted || _isDisposed || _prefersReducedMotion)
+        {
+            return;
+        }
+
+        _heroLoopStarted = true;
+        CancelAndDispose(ref _heroCts);
+        _heroCts = new CancellationTokenSource();
+        _ = RunHeroTypingLoopAsync(_heroCts.Token);
+    }
+
+    private async Task RunHeroTypingLoopAsync(CancellationToken token)
+    {
+        try
+        {
+            while (!token.IsCancellationRequested && !_isDisposed)
+            {
+                _heroTypedLength = 0;
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(HeroRestartPauseMs, token);
+
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                while (_heroTypedLength < HeroFullText.Length && !token.IsCancellationRequested)
+                {
+                    await Task.Delay(HeroTypingCharDelayMs, token);
+                    var targetLength = Math.Min(
+                        HeroFullText.Length,
+                        Math.Max(_heroTypedLength + 1, (int)(stopwatch.ElapsedMilliseconds / HeroTypingCharDelayMs)));
+
+                    if (targetLength != _heroTypedLength)
+                    {
+                        _heroTypedLength = targetLength;
+                        await InvokeAsync(StateHasChanged);
+                    }
+                }
+
+                // Mantém o título completo visível por 4 segundos antes de apagar e reiniciar
+                await Task.Delay(HeroCompletedPauseMs, token);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelamento esperado ao desmontar ou ativar prefers-reduced-motion
+        }
+    }
+
+    // =========================================================================
+    // 3. DETALHES DO PROJETO COMO TERMINAL
+    // =========================================================================
     private void OpenProject(portfolio.Data.ProjectItem project)
     {
+        _projectSessionId++;
+        var currentSession = _projectSessionId;
+        CancelAndDispose(ref _projectTerminalCts);
+
         _selectedProject = project;
+        InitializeProjectTerminalState(project);
+
+        if (_prefersReducedMotion)
+        {
+            CompleteProjectTerminal();
+            return;
+        }
+
+        _projectTerminalCts = new CancellationTokenSource();
+        _ = RunProjectTerminalAsync(currentSession, _projectTerminalCts.Token);
     }
 
     private void CloseProject()
     {
+        _projectSessionId++;
+        CancelAndDispose(ref _projectTerminalCts);
         _selectedProject = null;
+        _projectTerminalBlocks.Clear();
+        _projectActiveCursorStage = ProjectCursorStage.None;
     }
 
     private void HandleProjectKeyDown(KeyboardEventArgs e, portfolio.Data.ProjectItem project)
@@ -441,6 +688,333 @@
             OpenProject(project);
         }
     }
+
+    private void InitializeProjectTerminalState(portfolio.Data.ProjectItem project)
+    {
+        _projectCommandText = $"project open \"{project.Name}\"";
+        _projectCommandVisible = false;
+        _projectCommandTypedLength = 0;
+
+        _projectLoadingVisible = false;
+        _projectLoadingTypedLength = 0;
+
+        _projectDoneVisible = false;
+        _projectDoneTypedLength = 0;
+        _projectTerminalCompleted = false;
+        _projectActiveCursorStage = ProjectCursorStage.None;
+
+        var summary = string.IsNullOrWhiteSpace(project.CaseStudySummary)
+            ? "Visão geral não informada."
+            : project.CaseStudySummary.Trim();
+
+        var problem = string.IsNullOrWhiteSpace(project.Problem)
+            ? "Problema não informado."
+            : project.Problem.Trim();
+
+        var solution = string.IsNullOrWhiteSpace(project.Solution)
+            ? "Solução não informada."
+            : project.Solution.Trim();
+
+        var architecture = string.IsNullOrWhiteSpace(project.ArchitectureDescription)
+            ? "Arquitetura do projeto não informada."
+            : project.ArchitectureDescription.Trim();
+
+        var result = string.IsNullOrWhiteSpace(project.Result)
+            ? "Resultado não informado."
+            : project.Result.Trim();
+
+        var technologies = project.DistinctStack.Count > 0
+            ? string.Join(", ", project.DistinctStack)
+            : "Tecnologias não informadas.";
+
+        _projectTerminalBlocks =
+        [
+            new ProjectTerminalBlock("> VISÃO GERAL", summary),
+            new ProjectTerminalBlock("> PROBLEMA", problem),
+            new ProjectTerminalBlock("> SOLUÇÃO", solution),
+            new ProjectTerminalBlock("> ARQUITETURA", architecture),
+            new ProjectTerminalBlock("> RESULTADO", result),
+            new ProjectTerminalBlock("> TECNOLOGIAS", technologies)
+        ];
+    }
+
+    private void CompleteProjectTerminal()
+    {
+        CancelAndDispose(ref _projectTerminalCts);
+
+        _projectCommandVisible = true;
+        _projectCommandTypedLength = _projectCommandText.Length;
+
+        _projectLoadingVisible = true;
+        _projectLoadingTypedLength = _projectLoadingText.Length;
+
+        foreach (var block in _projectTerminalBlocks)
+        {
+            block.IsHeaderVisible = true;
+            block.HeaderTypedLength = block.Header.Length;
+            block.IsCursorOnHeader = false;
+
+            block.IsBodyVisible = true;
+            block.BodyTypedLength = block.Body.Length;
+            block.IsCursorOnBody = false;
+        }
+
+        _projectDoneVisible = true;
+        _projectDoneTypedLength = _projectDoneText.Length;
+        _projectActiveCursorStage = ProjectCursorStage.None;
+        _projectTerminalCompleted = true;
+    }
+
+    private async Task RunProjectTerminalAsync(int sessionId, CancellationToken token)
+    {
+        try
+        {
+            // 1. Linha de comando: C:\Portfolio> project open "Nome do projeto"
+            _projectCommandVisible = true;
+            _projectActiveCursorStage = ProjectCursorStage.Command;
+            await TypeStringProgressivelyAsync(
+                _projectCommandText,
+                len => _projectCommandTypedLength = len,
+                ProjectTypingCharDelayMs,
+                sessionId,
+                () => _projectSessionId,
+                token);
+
+            await Task.Delay(ProjectBlockPauseMs, token);
+
+            // 2. [CARREGANDO PROJETO...]
+            _projectLoadingVisible = true;
+            _projectActiveCursorStage = ProjectCursorStage.Loading;
+            await TypeStringProgressivelyAsync(
+                _projectLoadingText,
+                len => _projectLoadingTypedLength = len,
+                ProjectTypingCharDelayMs,
+                sessionId,
+                () => _projectSessionId,
+                token);
+
+            _projectActiveCursorStage = ProjectCursorStage.None;
+            await Task.Delay(ProjectBlockPauseMs, token);
+
+            // 3. Seções de dados existentes do projeto
+            foreach (var block in _projectTerminalBlocks)
+            {
+                if (token.IsCancellationRequested || sessionId != _projectSessionId)
+                {
+                    return;
+                }
+
+                block.IsHeaderVisible = true;
+                block.IsCursorOnHeader = true;
+                await TypeStringProgressivelyAsync(
+                    block.Header,
+                    len => block.HeaderTypedLength = len,
+                    ProjectTypingCharDelayMs,
+                    sessionId,
+                    () => _projectSessionId,
+                    token);
+                block.IsCursorOnHeader = false;
+
+                block.IsBodyVisible = true;
+                block.IsCursorOnBody = true;
+                await TypeStringProgressivelyAsync(
+                    block.Body,
+                    len => block.BodyTypedLength = len,
+                    ProjectTypingCharDelayMs,
+                    sessionId,
+                    () => _projectSessionId,
+                    token);
+                block.IsCursorOnBody = false;
+
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(ProjectBlockPauseMs, token);
+            }
+
+            // 4. [LEITURA CONCLUÍDA] e prompt final C:\Portfolio> █
+            _projectDoneVisible = true;
+            _projectActiveCursorStage = ProjectCursorStage.Done;
+            await TypeStringProgressivelyAsync(
+                _projectDoneText,
+                len => _projectDoneTypedLength = len,
+                ProjectTypingCharDelayMs,
+                sessionId,
+                () => _projectSessionId,
+                token);
+
+            _projectActiveCursorStage = ProjectCursorStage.None;
+            _projectTerminalCompleted = true;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelamento esperado ao fechar o modal, trocar de projeto ou clicar em "Exibir tudo"
+        }
+    }
+
+    // =========================================================================
+    // 4. STACKS E FERRAMENTAS COM COMANDO /help
+    // =========================================================================
+    private async Task ExecuteSkillsCommandAsync()
+    {
+        var rawInput = _skillsCommandInput ?? string.Empty;
+        var normalized = rawInput.Trim().ToLowerInvariant();
+
+        _skillsSessionId++;
+        var currentSession = _skillsSessionId;
+        CancelAndDispose(ref _skillsCts);
+
+        if (normalized != "/help")
+        {
+            _skillsExecutedCommand = string.IsNullOrWhiteSpace(rawInput) ? string.Empty : rawInput.Trim();
+            _skillsErrorMessage = "Comando não reconhecido. Digite /help.";
+            _skillsShowLoadingLine = false;
+            return;
+        }
+
+        _skillsExecutedCommand = "/help";
+        _skillsErrorMessage = null;
+        _skillsCommandInput = string.Empty;
+        _skillsShowLoadingLine = true;
+        _skillsCardsActivated = true;
+        _skillCards = CreateInitialSkillCards();
+
+        if (_prefersReducedMotion)
+        {
+            CompleteSkillsCardsImmediately();
+            return;
+        }
+
+        _skillsCts = new CancellationTokenSource();
+        await RunSkillsHelpAnimationAsync(currentSession, _skillsCts.Token);
+    }
+
+    private void CompleteSkillsCardsImmediately()
+    {
+        CancelAndDispose(ref _skillsCts);
+        _skillsCardsActivated = true;
+
+        foreach (var card in _skillCards)
+        {
+            card.IsVisible = true;
+            card.TitleTypedLength = card.Title.Length;
+            card.IsCursorOnTitle = false;
+
+            foreach (var item in card.Items)
+            {
+                item.IsVisible = true;
+                item.TypedLength = item.Text.Length;
+                item.IsCursorActive = false;
+            }
+        }
+    }
+
+    private async Task RunSkillsHelpAnimationAsync(int sessionId, CancellationToken token)
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(SkillsLoadingPauseMs, token);
+
+            foreach (var card in _skillCards)
+            {
+                if (token.IsCancellationRequested || sessionId != _skillsSessionId)
+                {
+                    return;
+                }
+
+                card.IsVisible = true;
+                card.IsCursorOnTitle = true;
+                await TypeStringProgressivelyAsync(
+                    card.Title,
+                    len => card.TitleTypedLength = len,
+                    SkillsTypingCharDelayMs,
+                    sessionId,
+                    () => _skillsSessionId,
+                    token);
+                card.IsCursorOnTitle = false;
+                await InvokeAsync(StateHasChanged);
+
+                await Task.Delay(SkillsItemPauseMs, token);
+
+                foreach (var item in card.Items)
+                {
+                    if (token.IsCancellationRequested || sessionId != _skillsSessionId)
+                    {
+                        return;
+                    }
+
+                    item.IsVisible = true;
+                    item.IsCursorActive = true;
+                    await TypeStringProgressivelyAsync(
+                        item.Text,
+                        len => item.TypedLength = len,
+                        SkillsTypingCharDelayMs,
+                        sessionId,
+                        () => _skillsSessionId,
+                        token);
+                    item.IsCursorActive = false;
+                    await InvokeAsync(StateHasChanged);
+
+                    await Task.Delay(SkillsItemPauseMs, token);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelamento esperado ao reexecutar /help ou desmontar o componente
+        }
+    }
+
+    private async Task TypeStringProgressivelyAsync(
+        string fullText,
+        Action<int> updateLength,
+        int charDelayMs,
+        int expectedSessionId,
+        Func<int> getCurrentSessionId,
+        CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(fullText))
+        {
+            updateLength(0);
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        var currentLength = 0;
+        updateLength(0);
+        await InvokeAsync(StateHasChanged);
+
+        var tickDelay = Math.Max(15, charDelayMs);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        while (currentLength < fullText.Length && !token.IsCancellationRequested && expectedSessionId == getCurrentSessionId() && !_isDisposed)
+        {
+            await Task.Delay(tickDelay, token);
+
+            if (token.IsCancellationRequested || expectedSessionId != getCurrentSessionId() || _isDisposed)
+            {
+                return;
+            }
+
+            var targetLength = Math.Min(
+                fullText.Length,
+                Math.Max(currentLength + 1, (int)(stopwatch.ElapsedMilliseconds / Math.Max(1, charDelayMs))));
+
+            if (targetLength != currentLength)
+            {
+                currentLength = targetLength;
+                updateLength(currentLength);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    private static List<SkillCardState> CreateInitialSkillCards() =>
+    [
+        new SkillCardState("Frontend", ["Blazor", "HTML/CSS", "JavaScript", "Design systems"]),
+        new SkillCardState("Backend", [".NET 10", "ASP.NET Core", "APIs", "Integrations"]),
+        new SkillCardState("Product", ["UX/UI", "Arquitetura", "Performance", "Entrega"])
+    ];
 
     private void HandleSubmit()
     {
@@ -453,6 +1027,93 @@
 
         _submitted = true;
         _contactModel = new ContactFormModel();
+    }
+
+    private static void CancelAndDispose(ref CancellationTokenSource? cts)
+    {
+        if (cts is null)
+        {
+            return;
+        }
+
+        try
+        {
+            cts.Cancel();
+            cts.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        finally
+        {
+            cts = null;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _isDisposed = true;
+        _projectSessionId++;
+        _skillsSessionId++;
+
+        CancelAndDispose(ref _heroCts);
+        CancelAndDispose(ref _projectTerminalCts);
+        CancelAndDispose(ref _skillsCts);
+
+        if (_jsModule is not null)
+        {
+            try
+            {
+                await _jsModule.InvokeVoidAsync("disposeHomeInteractions");
+                await _jsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+            {
+            }
+        }
+
+        _dotNetRef?.Dispose();
+    }
+
+    private enum ProjectCursorStage
+    {
+        None,
+        Command,
+        Loading,
+        Done
+    }
+
+    private sealed class ProjectTerminalBlock(string header, string body)
+    {
+        public string Header { get; } = header;
+        public string Body { get; } = body;
+        public bool IsHeaderVisible { get; set; }
+        public int HeaderTypedLength { get; set; }
+        public bool IsCursorOnHeader { get; set; }
+        public bool IsBodyVisible { get; set; }
+        public int BodyTypedLength { get; set; }
+        public bool IsCursorOnBody { get; set; }
+    }
+
+    private sealed class SkillCardState(string title, IEnumerable<string> items)
+    {
+        public string Title { get; } = title;
+        public bool IsVisible { get; set; }
+        public int TitleTypedLength { get; set; }
+        public bool IsCursorOnTitle { get; set; }
+        public List<SkillItemState> Items { get; } = items.Select(i => new SkillItemState(i)).ToList();
+
+        public string GetVisibleTitle() => Title[..Math.Clamp(TitleTypedLength, 0, Title.Length)];
+    }
+
+    private sealed class SkillItemState(string text)
+    {
+        public string Text { get; } = text;
+        public bool IsVisible { get; set; }
+        public int TypedLength { get; set; }
+        public bool IsCursorActive { get; set; }
+
+        public string GetVisibleText() => Text[..Math.Clamp(TypedLength, 0, Text.Length)];
     }
 
     private class ContactFormModel

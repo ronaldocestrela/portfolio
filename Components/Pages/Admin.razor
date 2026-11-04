@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @inject portfolio.Services.PortfolioService PortfolioService
 @inject IWebHostEnvironment HostEnvironment
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Admin | Portfólio</PageTitle>
 
@@ -22,7 +23,7 @@
 
                 <div class="form-group">
                     <label>Senha</label>
-                    <input type="password" @bind="_passwordInput" @bind:event="oninput" placeholder="Digite a senha do admin" />
+                    <input type="password" @bind="_passwordInput" @bind:event="oninput" @onkeydown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter") await ValidatePassword(); })" placeholder="Digite a senha do admin" />
                 </div>
 
                 @if (!string.IsNullOrWhiteSpace(_statusMessage))
@@ -46,6 +47,7 @@ else
 
             <div class="admin-actions">
                 <a class="secondary-btn" href="/">Ver site</a>
+                <button class="secondary-btn" type="button" @onclick="Logout">Sair</button>
                 <button class="primary-btn" type="button" @onclick="SavePortfolio">Salvar mudanças</button>
             </div>
         </div>
@@ -211,7 +213,32 @@ else
         _portfolio = PortfolioService.GetPortfolio();
     }
 
-    private void ValidatePassword()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_isAuthenticated)
+        {
+            var configuredPassword = System.Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+            if (!string.IsNullOrWhiteSpace(configuredPassword))
+            {
+                var expectedToken = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(configuredPassword)));
+                try
+                {
+                    var storedToken = await JSRuntime.InvokeAsync<string?>("sessionStorage.getItem", "admin_session");
+                    if (string.Equals(storedToken, expectedToken, StringComparison.Ordinal))
+                    {
+                        _isAuthenticated = true;
+                        StateHasChanged();
+                    }
+                }
+                catch
+                {
+                    // Ignore prerender or interop issues
+                }
+            }
+        }
+    }
+
+    private async Task ValidatePassword()
     {
         var configuredPassword = System.Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
@@ -225,11 +252,34 @@ else
         {
             _isAuthenticated = true;
             _statusMessage = string.Empty;
+            _passwordInput = string.Empty;
+            try
+            {
+                var token = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(configuredPassword)));
+                await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "admin_session", token);
+            }
+            catch
+            {
+            }
             return;
         }
 
         _statusMessage = "Senha incorreta.";
         _passwordInput = string.Empty;
+    }
+
+    private async Task Logout()
+    {
+        _isAuthenticated = false;
+        _passwordInput = string.Empty;
+        _statusMessage = "Sessão encerrada com sucesso.";
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "admin_session");
+        }
+        catch
+        {
+        }
     }
 
     private void SavePortfolio()
@@ -304,35 +354,75 @@ else
             return;
         }
 
-        var files = e.GetMultipleFiles(Math.Clamp(5 - project.ValidImages.Count, 1, 5)).ToList();
-
-        foreach (var file in files)
+        try
         {
-            var extension = Path.GetExtension(file.Name);
-            var fileName = $"{Guid.NewGuid():N}{extension}";
-            var folderPath = Path.Combine(HostEnvironment.WebRootPath, "uploads", "projects");
-            Directory.CreateDirectory(folderPath);
-
-            var filePath = Path.Combine(folderPath, fileName);
-            await using (var stream = File.Create(filePath))
+            var remainingSlots = Math.Max(0, 5 - project.ValidImages.Count);
+            if (remainingSlots <= 0)
             {
-                await file.OpenReadStream(10 * 1024 * 1024).CopyToAsync(stream);
+                _statusMessage = "Limite de 5 imagens por projeto já atingido.";
+                return;
             }
 
-            var relativePath = $"/uploads/projects/{fileName}";
-            project.Images.Add(relativePath);
+            var selectedCount = e.FileCount;
+            if (selectedCount > remainingSlots)
+            {
+                _statusMessage = $"Você pode selecionar no máximo {remainingSlots} imagem(ns) (limite total de 5 por projeto).";
+                return;
+            }
+
+            var files = e.GetMultipleFiles(remainingSlots).ToList();
+            if (files.Count == 0)
+            {
+                return;
+            }
+
+            var webRoot = HostEnvironment.WebRootPath ?? Path.Combine(HostEnvironment.ContentRootPath, "wwwroot");
+            var folderPath = Path.Combine(webRoot, "uploads", "projects");
+            Directory.CreateDirectory(folderPath);
+
+            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".avif"
+            };
+
+            foreach (var file in files)
+            {
+                var extension = Path.GetExtension(file.Name);
+                if (string.IsNullOrWhiteSpace(extension) || !allowedExtensions.Contains(extension))
+                {
+                    extension = ".jpg";
+                }
+
+                var fileName = $"{Guid.NewGuid():N}{extension}";
+                var filePath = Path.Combine(folderPath, fileName);
+
+                await using (var stream = File.Create(filePath))
+                {
+                    await file.OpenReadStream(20 * 1024 * 1024).CopyToAsync(stream);
+                }
+
+                var relativePath = $"/uploads/projects/{fileName}";
+                project.Images.Add(relativePath);
+            }
+
+            project.Images = project.ValidImages.ToList();
+
+            if (project.Images.Count > 0 &&
+                (string.IsNullOrWhiteSpace(project.DisplayImage) || !project.Images.Any(image => string.Equals(image, project.DisplayImage, StringComparison.OrdinalIgnoreCase))))
+            {
+                project.DisplayImage = project.DisplayImageUrl;
+            }
+
+            PortfolioService.SavePortfolio(_portfolio);
+            _statusMessage = "Imagem adicionada e salva com sucesso!";
         }
-
-        project.Images = project.ValidImages.ToList();
-
-        if (project.Images.Count > 0 &&
-            (string.IsNullOrWhiteSpace(project.DisplayImage) || !project.Images.Any(image => string.Equals(image, project.DisplayImage, StringComparison.OrdinalIgnoreCase))))
+        catch (Exception ex)
         {
-            project.DisplayImage = project.DisplayImageUrl;
+            _statusMessage = $"Erro ao enviar imagem: {ex.Message}";
         }
     }
 
-    private static void SetProjectDisplayImage(portfolio.Data.ProjectItem project, string image)
+    private void SetProjectDisplayImage(portfolio.Data.ProjectItem project, string image)
     {
         if (project is null || string.IsNullOrWhiteSpace(image))
         {
@@ -340,9 +430,11 @@ else
         }
 
         project.DisplayImage = image;
+        PortfolioService.SavePortfolio(_portfolio);
+        _statusMessage = "Foto de exibição atualizada e salva.";
     }
 
-    private static void RemoveProjectImage(portfolio.Data.ProjectItem project, string image)
+    private void RemoveProjectImage(portfolio.Data.ProjectItem project, string image)
     {
         if (project is null || string.IsNullOrWhiteSpace(image))
         {
@@ -355,6 +447,24 @@ else
         {
             project.DisplayImage = project.DisplayImageUrl;
         }
+
+        try
+        {
+            var webRoot = HostEnvironment.WebRootPath ?? Path.Combine(HostEnvironment.ContentRootPath, "wwwroot");
+            var cleanRelative = image.TrimStart('/');
+            var physicalPath = Path.Combine(webRoot, cleanRelative);
+            if (File.Exists(physicalPath))
+            {
+                File.Delete(physicalPath);
+            }
+        }
+        catch
+        {
+            // Ignore error deleting physical file
+        }
+
+        PortfolioService.SavePortfolio(_portfolio);
+        _statusMessage = "Imagem removida e alterações salvas.";
     }
 
     private static List<string> ParseList(string? value)

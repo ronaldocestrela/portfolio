@@ -24,6 +24,8 @@
 
 html {
     scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(45, 98, 237, 0.45) rgba(7, 11, 20, 0.7);
 }
 
 body {
@@ -43,6 +45,36 @@ body {
 
 * {
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(45, 98, 237, 0.45) rgba(7, 11, 20, 0.7);
+}
+
+/* Custom Scrollbar Global (WebKit / Chromium / Edge / Safari) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(7, 11, 20, 0.75);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(45, 98, 237, 0.4);
+    border-radius: 4px;
+    border: 1px solid rgba(14, 53, 157, 0.35);
+    transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(45, 98, 237, 0.75);
+    border-color: rgba(45, 98, 237, 0.8);
+    box-shadow: 0 0 8px rgba(45, 98, 237, 0.5);
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
 }
 
 a {
@@ -901,6 +933,26 @@ textarea {
     border: 1px solid rgba(14, 53, 157, 0.35);
     background: linear-gradient(180deg, rgba(10, 16, 28, 0.98), rgba(13, 21, 38, 0.98));
     box-shadow: 0 35px 90px rgba(0, 0, 0, 0.55);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(45, 98, 237, 0.45) rgba(7, 11, 20, 0.6);
+}
+
+.project-modal::-webkit-scrollbar {
+    width: 6px;
+}
+
+.project-modal::-webkit-scrollbar-track {
+    background: rgba(7, 11, 20, 0.6);
+    border-radius: 3px;
+}
+
+.project-modal::-webkit-scrollbar-thumb {
+    background: rgba(45, 98, 237, 0.4);
+    border-radius: 3px;
+}
+
+.project-modal::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-bright);
 }
 
 .project-modal-shell {
@@ -1309,6 +1361,28 @@ input[type="file"] {
     color: var(--text-secondary);
     display: grid;
     gap: 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(45, 98, 237, 0.45) rgba(5, 8, 15, 0.8);
+}
+
+.project-terminal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.project-terminal-body::-webkit-scrollbar-track {
+    background: rgba(5, 8, 15, 0.8);
+    border-radius: 3px;
+}
+
+.project-terminal-body::-webkit-scrollbar-thumb {
+    background: rgba(45, 98, 237, 0.45);
+    border-radius: 3px;
+    border: none;
+}
+
+.project-terminal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-bright);
+    box-shadow: 0 0 8px rgba(45, 98, 237, 0.6);
 }
 
 .cmd-output-line {

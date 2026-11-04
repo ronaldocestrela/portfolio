@@ -7,6 +7,7 @@ namespace portfolio.Services;
 public class PortfolioService
 {
     private static readonly object DatabaseInitializationLock = new();
+    private static bool _isInitialized;
 
     private readonly PortfolioDbContext _dbContext;
     private readonly IWebHostEnvironment _environment;
@@ -124,11 +125,54 @@ public class PortfolioService
 
     private void InitializeDatabase()
     {
+        if (_isInitialized)
+        {
+            return;
+        }
+
         lock (DatabaseInitializationLock)
         {
+            if (_isInitialized)
+            {
+                return;
+            }
+
+            EnsureDatabaseDirectoryExists();
             _dbContext.Database.EnsureCreated();
             MigrateLegacyJsonIfNeeded();
             EnsureSeedData();
+            _isInitialized = true;
+        }
+    }
+
+    private void EnsureDatabaseDirectoryExists()
+    {
+        try
+        {
+            var connection = _dbContext.Database.GetDbConnection();
+            var builder = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(connection.ConnectionString);
+            if (!string.IsNullOrWhiteSpace(builder.DataSource) &&
+                !builder.DataSource.StartsWith(":memory:", StringComparison.OrdinalIgnoreCase) &&
+                !builder.DataSource.StartsWith("file::memory:", StringComparison.OrdinalIgnoreCase))
+            {
+                var fullDbPath = Path.IsPathRooted(builder.DataSource)
+                    ? builder.DataSource
+                    : Path.GetFullPath(Path.Combine(_environment.ContentRootPath, builder.DataSource));
+
+                var dbDirectory = Path.GetDirectoryName(fullDbPath);
+                if (!string.IsNullOrEmpty(dbDirectory) && !Directory.Exists(dbDirectory))
+                {
+                    Directory.CreateDirectory(dbDirectory);
+                }
+            }
+        }
+        catch
+        {
+            var defaultDataDir = Path.Combine(_environment.ContentRootPath, "data");
+            if (!Directory.Exists(defaultDataDir))
+            {
+                Directory.CreateDirectory(defaultDataDir);
+            }
         }
     }
 

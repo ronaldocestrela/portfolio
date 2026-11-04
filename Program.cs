@@ -9,9 +9,31 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseStaticWebAssets();
 
+var rawConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Data Source=data/portfolio.db";
+
+var connectionStringBuilder = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(rawConnectionString);
+if (!string.IsNullOrWhiteSpace(connectionStringBuilder.DataSource) &&
+    !connectionStringBuilder.DataSource.StartsWith(":memory:", StringComparison.OrdinalIgnoreCase) &&
+    !connectionStringBuilder.DataSource.StartsWith("file::memory:", StringComparison.OrdinalIgnoreCase))
+{
+    var fullDbPath = Path.IsPathRooted(connectionStringBuilder.DataSource)
+        ? connectionStringBuilder.DataSource
+        : Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, connectionStringBuilder.DataSource));
+
+    var dbDirectory = Path.GetDirectoryName(fullDbPath);
+    if (!string.IsNullOrEmpty(dbDirectory) && !Directory.Exists(dbDirectory))
+    {
+        Directory.CreateDirectory(dbDirectory);
+    }
+
+    connectionStringBuilder.DataSource = fullDbPath;
+}
+
+var connectionString = connectionStringBuilder.ToString();
+
 builder.Services.AddDbContext<PortfolioDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Data Source=data/portfolio.db"));
+    options.UseSqlite(connectionString));
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()

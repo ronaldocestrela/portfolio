@@ -4,9 +4,23 @@ Aplicação de portfólio e painel administrativo desenvolvida em .NET 10 + Blaz
 
 ## Como rodar
 
+### Localmente
+
 ```bash
 dotnet restore
 dotnet run
+```
+
+### Docker em Produção
+
+```bash
+docker compose up -d --build
+```
+
+### Docker em Desenvolvimento (com Hot Reload)
+
+```bash
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
 A aplicação fica disponível em:

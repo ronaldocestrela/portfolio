@@ -3,27 +3,25 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: portfolio-dev
+      target: final
+    container_name: portfolio-app
     restart: unless-stopped
-    working_dir: /src
     volumes:
-      - .:/src
-      - /src/bin
-      - /src/obj
+      # Persistência do banco de dados SQLite e dos uploads em produção
+      - ./data:/app/data
+      - ./wwwroot/uploads:/app/wwwroot/uploads
     ports:
       # Vincula explicitamente ao 0.0.0.0 para aceitar conexões de qualquer interface/IP externo
       - "0.0.0.0:3001:3001"
       # Opcional: descomente para acessar diretamente pela porta 80 padrão (http://seu-ip)
       # - "0.0.0.0:80:3001"
+    env_file:
+      - .env
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://0.0.0.0:3001
       ASPNETCORE_HTTP_PORTS: "3001"
       # Permite repasse de cabeçalhos caso use proxy reverso (Nginx, Traefik, Cloudflare, etc.)
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       # Evita que o ASP.NET redirecione requisições HTTP para HTTPS quando não houver certificado SSL configurado
-      DISABLE_HTTPS_REDIRECTION: "true"
-      DOTNET_USE_POLLING_FILE_WATCHER: "1"
-    stdin_open: true
-    tty: true
-
+      DISABLE_HTTPS_REDIRECTION: ${DISABLE_HTTPS_REDIRECTION:-true}

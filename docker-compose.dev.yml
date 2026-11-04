@@ -1,0 +1,27 @@
+services:
+  portfolio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: portfolio-dev
+    restart: unless-stopped
+    working_dir: /src
+    volumes:
+      - .:/src
+      - /src/bin
+      - /src/obj
+    ports:
+      - "0.0.0.0:3001:3001"
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:3001
+      ASPNETCORE_HTTP_PORTS: "3001"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      DISABLE_HTTPS_REDIRECTION: "true"
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+    stdin_open: true
+    tty: true
+

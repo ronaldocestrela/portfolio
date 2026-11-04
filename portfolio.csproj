@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <DefaultItemExcludes>$(DefaultItemExcludes);wwwroot/uploads/**;data/*.db;data/*.db-*</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,14 +15,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Portfolio.Tests/**/*.cs" />
-    <None Remove="Portfolio.Tests/**/*" />
-    <EmbeddedResource Remove="Portfolio.Tests/**/*" />
+    <Compile Remove="Portfolio.Tests/**" />
+    <Content Remove="Portfolio.Tests/**" />
+    <EmbeddedResource Remove="Portfolio.Tests/**" />
+    <None Remove="Portfolio.Tests/**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Watch Remove="wwwroot/uploads/**" />
-    <Watch Remove="data/**" />
+    <Watch Remove="wwwroot/uploads/**;data/*.db;data/*.db-*" />
     <Content Update="wwwroot/uploads/**" Watch="false" />
   </ItemGroup>
 

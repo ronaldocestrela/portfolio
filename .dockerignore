@@ -5,6 +5,7 @@ obj/
 .vscode/
 Dockerfile
 README.md
-docker-compose.yml
+docker-compose*.yml
+Portfolio.Tests/
 *.user
 *.suo
